@@ -1,0 +1,92 @@
+import Konva from 'konva'
+
+type ObserverOptions<V> = {
+  beforeSet?: (value: V, oldValue: V) => V
+  afterSet?: (oldValue: V | undefined, newValue: V) => void
+  konvaSetterGetter?: boolean
+}
+const toCapCase = (s: string, prefix = '') => prefix + s[0].toUpperCase() + s.slice(1)
+
+export type Getter<T extends {}, K extends keyof T> = () => T[K]
+export type Setter<T extends {}, K extends keyof T> = (value: T[K]) => void
+const id = <T>(v: T) => v
+
+const invok = (target: any, key: string, args: any[] | any): any => {
+  const method = Reflect.get(target, key)
+  if (typeof method === 'function') {
+    return Reflect.apply(method, target, Array.isArray(args) ? args : [args])
+  }
+}
+
+/**
+ * Konva style set/get observer decorator
+ * @type {[type]}
+ */
+export const observer = function <T extends Konva.Node, P extends keyof T>(options?: ObserverOptions<T[P]>) {
+  const { beforeSet = id, afterSet, konvaSetterGetter } = options || {}
+
+  // decorator
+  return function (target: T, key: string) {
+    let value: T[P] | undefined
+    let dirty = false
+
+    Object.defineProperty(target, key, {
+      configurable: true,
+      // writable: true,
+      set(nextValue: T[P]) {
+        if (nextValue === value) return
+
+        const oldVal = Reflect.get(this, key)
+
+        if (dirty) {
+          // config callback
+          // lifecycle callback
+          const newVal = beforeSet.call(this, nextValue, oldVal)
+          invok(this, 'willUpdate', { key, oldVal, newVal })
+
+          value = nextValue
+
+          invok(this, 'didUpdate', { key, oldVal, newVal })
+          afterSet?.call(this, oldVal, newVal)
+        } else {
+          value = nextValue
+        }
+
+        dirty = true
+      },
+      get() {
+        return value
+      },
+    })
+
+    if (konvaSetterGetter) {
+      // Konva style setter getter
+      Reflect.defineProperty(target, toCapCase(key, 'set'), {
+        value(value: P) {
+          Reflect.set(this, key, value)
+          return this
+        },
+      })
+      Reflect.defineProperty(target, toCapCase(key, 'get'), {
+        value() {
+          return Reflect.get(this, key)
+        },
+      })
+    }
+  }
+}
+
+/**
+ * sample observe
+ */
+export const observe = observer()
+
+export type ChangedProp = { key: string; oldVal: any; newVal: any }
+export type PropChangeCallback = (prop: ChangedProp) => void
+
+export interface Observed {
+  willUpdate?: PropChangeCallback
+  didUpdate: PropChangeCallback
+
+  render(): void
+}

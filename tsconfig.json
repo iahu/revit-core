@@ -1,0 +1,21 @@
+{
+  "compilerOptions": {
+    "experimentalDecorators": true,
+    "emitDecoratorMetadata": true,
+    // 不要打开这个开关，影响 decorator 设置 setter/getter
+    // "useDefineForClassFields": true,
+    "downlevelIteration": true,
+    "target": "ES2015",
+    "module": "ESNext",
+    "lib": ["ESNext", "DOM"],
+    "moduleResolution": "Node",
+    "declaration": true,
+    "outDir": "dist/esm",
+    "strict": true,
+    "strictPropertyInitialization": false,
+    "sourceMap": true,
+    "resolveJsonModule": true,
+    "esModuleInterop": true
+  },
+  "include": ["./src"]
+}

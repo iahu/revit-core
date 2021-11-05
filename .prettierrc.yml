@@ -1,0 +1,10 @@
+parser: babel
+printWidth: 120
+tabWidth: 2
+semi: false
+bracketSpacing: true
+jsxBracketSameLine: false
+singleQuote: true
+trailingComma: all
+arrowParens: avoid
+useTabs: false
