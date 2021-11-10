@@ -2,24 +2,26 @@ import Konva from 'konva'
 import { highlight } from './actions/highlight'
 import { move } from './actions/move'
 import { select } from './actions/select'
+import { align } from './actions/align'
 import { Entity, Layer } from './data/store'
 import { getBackgroundLayer } from './helpers/background'
 import { getDraftLayer } from './helpers/draft'
 import { getSelectionRect } from './helpers/selection-rect'
 import { getTransformer } from './helpers/transfomer'
 
-const noop = () => {}
+const noop = () => { }
 const commands = {
   highlight,
   select,
   move,
+  align,
   'draw-grid': noop,
   'create-shape': noop,
 }
 
 const memoShapes = new Map<Entity, Konva.Shape>()
 
-export default class RevitCore {
+export default class Kad {
   static commands = commands
 
   layers = [] as Layer[]
@@ -45,7 +47,7 @@ export default class RevitCore {
 
     this.renderToKonva()
     // 默认命令
-    this.execute('highlight')
+    // this.execute('highlight')
     this.execute('select')
   }
 
@@ -107,6 +109,8 @@ export default class RevitCore {
       shape = new Konva.Path(config)
     } else if (type === 'text') {
       shape = new Konva.Text(config)
+    } else if (type === 'line') {
+      shape = new Konva.Line(config)
     } else {
       // @todo 具体化
       shape = new Konva.Shape(config)

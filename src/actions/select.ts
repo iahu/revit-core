@@ -1,5 +1,6 @@
 import Konva from 'konva'
 import { getBackgroundLayer } from '../helpers/background'
+import { getDraftLayer } from '../helpers/draft'
 import { getSelectionRect } from '../helpers/selection-rect'
 import { getTransformer } from '../helpers/transfomer'
 
@@ -7,6 +8,7 @@ const selection = new Map<string, Konva.NodeConfig>()
 
 export const select = (stage: Konva.Stage) => {
   const stageLayer = getBackgroundLayer(stage)
+  const draftLayer = getDraftLayer(stage)
 
   let transformer = stageLayer.findOne('#global-transformer') as Konva.Transformer
   if (!transformer) {
@@ -36,7 +38,7 @@ export const select = (stage: Konva.Stage) => {
     x2 = 0,
     y2 = 0
 
-  stage.on('mousedown touchstart', e => {
+  stageLayer.on('mousedown touchstart', e => {
     // do nothing if we mousedown on any shape
     if (e.target !== stage || stageLayer.hasName('unselectable')) {
       return
@@ -110,16 +112,20 @@ export const select = (stage: Konva.Stage) => {
 
     // if click on empty area - remove all selections
     const { target } = e
+
     if (target instanceof Konva.Stage) {
-      setNodes([])
+      if (!draftLayer.visible()) {
+        setNodes([])
+      }
       return
     }
 
     // do we pressed shift or ctrl?
     const metaPressed = e.evt.shiftKey || e.evt.ctrlKey || e.evt.metaKey
     const isSelected = transformer.nodes().indexOf(e.target) >= 0
-
-    if (!metaPressed && !isSelected) {
+    if (target.hasName('unselectable')) {
+      setNodes([])
+    } else if (!metaPressed && !isSelected) {
       // if no key pressed and the node is not selected
       // select just one
       setNodes([target])

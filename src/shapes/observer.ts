@@ -3,6 +3,11 @@ import Konva from 'konva'
 type ObserverOptions<V> = {
   beforeSet?: (value: V, oldValue: V) => V
   afterSet?: (oldValue: V | undefined, newValue: V) => void
+  /**
+   * 开始后，会添加 `set{Key}` `get{Key}` 方法，
+   * 并且可以通过 `setAttr` `setAttrs`` 更新属性
+   * @type {[type]}
+   */
   konvaSetterGetter?: boolean
 }
 const toCapCase = (s: string, prefix = '') => prefix + s[0].toUpperCase() + s.slice(1)
@@ -23,7 +28,7 @@ const invok = (target: any, key: string, args: any[] | any): any => {
  * @type {[type]}
  */
 export const observer = function <T extends Konva.Node, P extends keyof T>(options?: ObserverOptions<T[P]>) {
-  const { beforeSet = id, afterSet, konvaSetterGetter } = options || {}
+  const { beforeSet = id, afterSet, konvaSetterGetter = true } = options || {}
 
   // decorator
   return function (target: T, key: string) {
@@ -32,6 +37,7 @@ export const observer = function <T extends Konva.Node, P extends keyof T>(optio
 
     Object.defineProperty(target, key, {
       configurable: true,
+      enumerable: true,
       // writable: true,
       set(nextValue: T[P]) {
         if (nextValue === value) return
@@ -42,11 +48,12 @@ export const observer = function <T extends Konva.Node, P extends keyof T>(optio
           // config callback
           // lifecycle callback
           const newVal = beforeSet.call(this, nextValue, oldVal)
-          invok(this, 'willUpdate', { key, oldVal, newVal })
+          invok(this, 'propWillUpdate', { key, oldVal, newVal })
 
           value = nextValue
+          invok(this, '__didUpdate', { key, oldVal, newVal })
 
-          invok(this, 'didUpdate', { key, oldVal, newVal })
+          invok(this, 'propDidUpdate', { key, oldVal, newVal })
           afterSet?.call(this, oldVal, newVal)
         } else {
           value = nextValue
@@ -85,8 +92,21 @@ export type ChangedProp = { key: string; oldVal: any; newVal: any }
 export type PropChangeCallback = (prop: ChangedProp) => void
 
 export interface Observed {
-  willUpdate?: PropChangeCallback
-  didUpdate: PropChangeCallback
+  /**
+   * Observer 更新属性前回调
+   */
+  propWillChange?: PropChangeCallback
+  /**
+   * Observer 更新属性后回调
+   */
+  propDidUpdate?: PropChangeCallback
 
+  /**
+   * 更新渲染结果
+   */
+  update?: () => void
+  /**
+   * 渲染到 Konva
+   */
   render(): void
 }

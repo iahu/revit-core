@@ -15,13 +15,13 @@ export interface CrossConfig extends Konva.ShapeConfig {
 }
 
 export default class Cross extends Konva.Shape {
-  @observer<Cross, 'angle'>() angle = 60
+  @observer<Cross, 'angle'>() angle = 45
   @observer<Cross, 'radius'>() radius = 8
 
   constructor(config?: CrossConfig) {
     super(config)
 
-    const { angle = 60, radius = 8 } = config ?? {}
+    const { angle = 45, radius = 8 } = config ?? {}
     this.angle = angle
     this.radius = radius
   }

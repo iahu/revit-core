@@ -1,40 +1,55 @@
 import Konva from 'konva'
+import { Vector2d } from 'konva/lib/types'
 import { getAssistor } from '../helpers/assistor'
 import { getBackgroundLayer } from '../helpers/background'
 import { getDraftLayer } from '../helpers/draft'
 import { getTransformer } from '../helpers/transfomer'
 
 type MoveConfig = {
-  snap: number
-}
-const defaultConfig = {
-  snap: 10,
+  snapAngle?: number
 }
 
-export const move = (stage: Konva.Stage, config = defaultConfig as MoveConfig) => {
-  // const { snap } = config
+const applyMove = (nodes: Konva.Node[], dest: Vector2d) => {
+  nodes.forEach(node => node.setAbsolutePosition(dest))
+}
+
+export const move = (stage: Konva.Stage, config = {} as MoveConfig) => {
+  const { snapAngle = 3 } = config
   const bgLayer = getBackgroundLayer(stage)
   const draftLayer = getDraftLayer(stage)
   const assistor = getAssistor(stage)
   const transformer = getTransformer(stage)
-  const { x, y, width, height } = transformer.getAttrs()
-  const pupperty = new Konva.Rect({ x, y, width, height, dash: [3, 3], stroke: '#0099ff', strokeWidth: 1 })
+  const pupperty = new Konva.Rect({ dash: [3, 3], stroke: '#0099ff', strokeWidth: 1 })
 
   draftLayer.add(pupperty)
   assistor.visible(false)
+  assistor.snapMaxAngle = snapAngle
 
   stage.off('mousedown.actionMove')
   stage.off('mousemove.actionMove')
 
-  stage.on('mousedown.actionMove', () => {
+  stage.on('mousedown.actionMove', event => {
+    event.evt.preventDefault()
     const { x = 0, y = 0 } = stage.getPointerPosition() ?? {}
+
+    if (event.target === stage) {
+      event.evt.stopImmediatePropagation()
+      draftLayer.visible(true)
+    }
+
+    const padding = transformer.padding()
     if (!assistor.visible()) {
       if (transformer.nodes().length === 0) {
         return
       }
-      const width = transformer.getWidth()
-      const height = transformer.getHeight()
-      pupperty.setAttrs({ x, y, width, height, visible: true })
+      pupperty.setAttrs({
+        x,
+        y,
+        offset: { x: padding, y: padding },
+        width: transformer.getWidth() + padding * 2,
+        height: transformer.getHeight() + padding * 2,
+        visible: true,
+      })
       assistor.startPoint = [x, y]
       assistor.endPoint = [x, y]
       assistor.visible(true)
@@ -47,13 +62,17 @@ export const move = (stage: Konva.Stage, config = defaultConfig as MoveConfig) =
       const dest = pupperty.getTransform().decompose()
       transformer.setPosition(dest)
       bgLayer.removeName('unselectable')
+
+      applyMove(transformer.nodes(), { x: dest.x + padding, y: dest.y + padding })
     }
   })
 
-  stage.on('mousemove.actionMove', () => {
+  stage.on('mousemove.actionMove', event => {
+    event.evt.preventDefault()
     const { x = 0, y = 0 } = stage.getPointerPosition() ?? {}
     if (assistor.visible()) {
       const [x1, y1] = assistor.startPoint
+
       assistor.endPoint = [x, y]
       // 取回更新后的 endPoint
       pupperty.setPosition({

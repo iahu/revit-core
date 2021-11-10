@@ -1,4 +1,4 @@
-import RevitCore from '.'
+import Kad from '.'
 import { InitStore } from './data/store'
 import logo from './assets/logo.png'
 
@@ -35,5 +35,10 @@ const layers: InitStore['layers'] = [
   },
 ]
 
-const core = new RevitCore(document.getElementById('app') as HTMLDivElement, layers)
-core.execute('move')
+const core = new Kad(document.getElementById('app') as HTMLDivElement, layers)
+
+const $btn = document.querySelector('.action.move') as HTMLButtonElement
+
+$btn.addEventListener('click', () => {
+  core.execute('move')
+})
