@@ -1,20 +1,19 @@
 import Konva from 'konva'
+import { Observable, Subscription, switchMapTo } from 'rxjs'
 import { highlight } from './actions/highlight'
 import { move } from './actions/move'
 import { select } from './actions/select'
-import { align } from './actions/align'
 import { Entity, Layer } from './data/store'
 import { getBackgroundLayer } from './helpers/background'
 import { getDraftLayer } from './helpers/draft'
 import { getSelectionRect } from './helpers/selection-rect'
 import { getTransformer } from './helpers/transfomer'
 
-const noop = () => { }
+const noop = () => {}
 const commands = {
   highlight,
   select,
   move,
-  align,
   'draw-grid': noop,
   'create-shape': noop,
 }
@@ -47,7 +46,7 @@ export default class Kad {
 
     this.renderToKonva()
     // 默认命令
-    // this.execute('highlight')
+    this.execute('highlight')
     this.execute('select')
   }
 
@@ -84,10 +83,42 @@ export default class Kad {
     this.stage.height(height ?? container.scrollHeight)
   }
 
+  command: string
+  commandId = 0
+  sbp?: Subscription
+
   execute(command: keyof typeof commands): void {
     if (Object.prototype.hasOwnProperty.call(commands, command)) {
-      commands[command](this.stage)
-      console.log('execute', command)
+      const cmd = commands[command]
+      console.groupEnd()
+      console.group(`command: ${command} [${this.commandId}]`)
+
+      // (this.stage)
+      if (this.sbp) {
+        console.log('unsubscribe previous command')
+        this.sbp.unsubscribe()
+      }
+
+      const obs = cmd(this.stage)
+
+      if (obs) {
+        console.log('subscribe')
+        this.sbp = obs.subscribe({
+          complete: () => {
+            if (this.command) {
+              console.log('completed')
+            }
+          },
+        })
+      } else {
+        console.log('lisenting')
+        this.sbp = undefined
+      }
+
+      this.command = command
+      this.commandId += 1
+    } else {
+      console.warn(command, 'not found')
     }
   }
 
@@ -109,8 +140,6 @@ export default class Kad {
       shape = new Konva.Path(config)
     } else if (type === 'text') {
       shape = new Konva.Text(config)
-    } else if (type === 'line') {
-      shape = new Konva.Line(config)
     } else {
       // @todo 具体化
       shape = new Konva.Shape(config)

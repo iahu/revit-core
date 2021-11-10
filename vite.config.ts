@@ -29,4 +29,10 @@ export default defineConfig({
       },
     },
   },
+  resolve: {
+    alias: {
+      '@helpers': path.resolve(__dirname, 'src/helpers'),
+      '@actions': path.resolve(__dirname, 'src/actions'),
+    },
+  },
 })

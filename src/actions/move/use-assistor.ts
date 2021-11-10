@@ -1,20 +1,16 @@
 import Konva from 'konva'
-import { Vector2d } from 'konva/lib/types'
-import { getAssistor } from '../helpers/assistor'
-import { getBackgroundLayer } from '../helpers/background'
-import { getDraftLayer } from '../helpers/draft'
-import { getTransformer } from '../helpers/transfomer'
+import { getAssistor } from '@helpers/assistor'
+import { getBackgroundLayer } from '@helpers/background'
+import { getDraftLayer } from '@helpers/draft'
+import { getTransformer } from '@helpers/transfomer'
+import { moveTo } from './move-to'
 
-type MoveConfig = {
+type AssistorOptions = {
   snapAngle?: number
 }
 
-const applyMove = (nodes: Konva.Node[], dest: Vector2d) => {
-  nodes.forEach(node => node.setAbsolutePosition(dest))
-}
-
-export const move = (stage: Konva.Stage, config = {} as MoveConfig) => {
-  const { snapAngle = 3 } = config
+export const useAssistor = (stage: Konva.Stage, options = {} as AssistorOptions) => {
+  const { snapAngle = 3 } = options
   const bgLayer = getBackgroundLayer(stage)
   const draftLayer = getDraftLayer(stage)
   const assistor = getAssistor(stage)
@@ -63,7 +59,7 @@ export const move = (stage: Konva.Stage, config = {} as MoveConfig) => {
       transformer.setPosition(dest)
       bgLayer.removeName('unselectable')
 
-      applyMove(transformer.nodes(), { x: dest.x + padding, y: dest.y + padding })
+      moveTo(transformer.nodes(), { x: dest.x + padding, y: dest.y + padding })
     }
   })
 

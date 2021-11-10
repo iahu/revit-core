@@ -37,8 +37,7 @@ const layers: InitStore['layers'] = [
 
 const core = new Kad(document.getElementById('app') as HTMLDivElement, layers)
 
-const $btn = document.querySelector('.action.move') as HTMLButtonElement
-
-$btn.addEventListener('click', () => {
+const $move = document.querySelector('.action.move') as HTMLButtonElement
+$move.addEventListener('click', () => {
   core.execute('move')
 })

@@ -9,7 +9,6 @@
       body {
         padding: 0;
         margin: 0;
-        overflow: hidden;
       }
       #app {
         width: 100vw;
@@ -18,12 +17,12 @@
       .action-bar {
         position: absolute;
         z-index: 2;
-        bottom: 0;
+        top: 0;
         display: flex;
         width: 100%;
         justify-content: center;
         padding: 6px;
-        box-shadow: border-box;
+        pointer-events: none;
       }
       .action-bar:hover {
         background: #cccccc33;
@@ -33,7 +32,6 @@
   <body>
     <div id="app"></div>
     <div class="action-bar">
-      <button class="action select">select</button>
       <button class="action move">move</button>
     </div>
     <script type="module" src="/src/page.ts"></script>

@@ -15,7 +15,13 @@
     "strictPropertyInitialization": false,
     "sourceMap": true,
     "resolveJsonModule": true,
-    "esModuleInterop": true
+    "esModuleInterop": true,
+    "baseUrl": "./src",
+    "paths": {
+      "@helpers/*": ["./helpers/*"],
+      "@actions/*": ["./actions/*"]
+    }
   },
-  "include": ["./src"]
+  "include": ["./src"],
+  "exclude": ["./src/__action/*.ts"]
 }

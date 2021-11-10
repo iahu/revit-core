@@ -1,8 +1,9 @@
 import Konva from 'konva'
-import { getDraftLayer } from './draft'
+import { getBackgroundLayer } from './background'
 
-export const getTransformer = (stage: Konva.Stage) => {
-  const stageLayer = getDraftLayer(stage)
+export const getTransformer = (container: Konva.Stage | Konva.Layer) => {
+  const stage = container.getStage()
+  const stageLayer = getBackgroundLayer(stage)
   let transformer = stage.findOne('#global-transformer') as Konva.Transformer
 
   if (transformer) {

@@ -1,8 +1,9 @@
 import Konva from 'konva'
-import { getDraftLayer } from './draft'
+import { getBackgroundLayer } from './background'
 
-export const getSelectionRect = (stage: Konva.Stage) => {
-  const stageLayer = getDraftLayer(stage)
+export const getSelectionRect = (container: Konva.Stage | Konva.Layer) => {
+  const stage = container.getStage()
+  const stageLayer = getBackgroundLayer(stage)
   let selectionRect = stage.findOne('#global-selection-rect') as Konva.Rect
   if (selectionRect) {
     return selectionRect
