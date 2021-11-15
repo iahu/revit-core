@@ -1,5 +1,9 @@
 import Konva from 'konva'
-import { Observed } from './observer'
+import { ChangedProp, Observed } from './observer'
+
+const normalized = (result: (Konva.Group | Konva.Shape)[] | null) => {
+  return result ? result.filter(v => !!v) : []
+}
 
 /**
  * Konva.Group 的封装，生命周期 render -> propWillUpdate ->
@@ -8,8 +12,11 @@ import { Observed } from './observer'
 export default class Kroup extends Konva.Group implements Observed {
   constructor(config: Konva.ContainerConfig) {
     super(config)
-
-    this.__render()
+    // lazy init
+    this.updated.then(() => {
+      // this.setAttrs(config)
+      this.__render()
+    })
   }
 
   /**
@@ -24,14 +31,35 @@ export default class Kroup extends Konva.Group implements Observed {
     })
   }
 
+  propWillChange(prop: ChangedProp) {}
+  propDidChange(prop: ChangedProp) {}
+
   /**
    * 更新后的 Promise 回调
    */
   updated = Promise.resolve(false)
 
   __didUpdate() {
+    if (!this.__hasRendered) {
+      this.updated = Promise.resolve(false)
+      return
+    }
+
+    if (!this.children?.length) {
+      this.forceUpdate(false)
+      this.__hasRendered = true
+      return
+    }
+
     try {
-      this.update?.()
+      const updateCallback = Reflect.get(this, 'update')
+      if (typeof updateCallback === 'function') {
+        updateCallback.call(this)
+      } else {
+        console.warn(`force rerender '${this.constructor.name}', because updateCallback is missing`)
+        // fore re-render
+        this.forceUpdate()
+      }
       this.updated = Promise.resolve(true)
     } catch (e) {
       console.error(e)
@@ -43,19 +71,25 @@ export default class Kroup extends Konva.Group implements Observed {
    * 如果有更新需求，在这里实现
    * 注意更新是属性粒度的，不是批量更新
    */
-  update() {
-    // update if need.
-  }
+  // update() {
+  //   // update if need.
+  // }
 
   /**
    * 依次执行 removeAll -> render -> update
    */
-  forceUpdate() {
-    this.__firstRendered = false
+  forceUpdate(callback = true) {
+    this.__hasRendered = false
     this.removeAll()
     this.remove()
-    this.render()
-    this.update()
+    this.__render()
+    if (!callback) {
+      return
+    }
+    const updateCallback = Reflect.get(this, 'update')
+    if (typeof updateCallback === 'function') {
+      updateCallback.call(this)
+    }
   }
 
   /**
@@ -74,21 +108,23 @@ export default class Kroup extends Konva.Group implements Observed {
     return [] as (Konva.Group | Konva.Shape)[]
   }
 
-  private __firstRendered = false
+  private __hasRendered = false
   firstRender() {
     // first render callback
   }
 
   private __render() {
-    if (this.__firstRendered || this.children?.length) {
+    if (this.__hasRendered || this.children?.length) {
       return
     }
 
-    const result = this.render()
+    const result = normalized(this.render())
     if (result?.length) {
       this.add(...result)
     }
-    this.__firstRendered = true
-    this.firstRender()
+    if (!this.__hasRendered) {
+      this.__hasRendered = true
+      this.firstRender()
+    }
   }
 }

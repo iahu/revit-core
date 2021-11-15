@@ -1,4 +1,4 @@
-import Kad from '.'
+import Kad, { Actions } from '.'
 import { InitStore } from './data/store'
 import logo from './assets/logo.png'
 
@@ -9,8 +9,8 @@ const layers: InitStore['layers'] = [
     entities: [
       {
         id: 'ent-1',
-        left: 0,
-        top: 0,
+        x: 100,
+        y: 100,
         width: 200,
         height: 200,
         type: 'svgPath' as const,
@@ -19,15 +19,16 @@ const layers: InitStore['layers'] = [
       },
       {
         id: 'ent-2',
-        left: 0,
-        top: 0,
+        x: 100,
+        y: 100,
         type: 'imgUrl' as const,
         imgUrl: logo,
+        visible: false,
       },
       {
         id: 'ent-3',
-        left: 0,
-        top: 0,
+        x: 100,
+        y: 100,
         type: 'text' as const,
         text: 'revit editor',
       },
@@ -35,9 +36,11 @@ const layers: InitStore['layers'] = [
   },
 ]
 
-const core = new Kad(document.getElementById('app') as HTMLDivElement, layers)
+const core = new Kad(document.getElementById('app') as HTMLDivElement, { layers })
 
-const $move = document.querySelector('.action.move') as HTMLButtonElement
-$move.addEventListener('click', () => {
-  core.execute('move')
+const $action = document.querySelector('.action-bar') as HTMLButtonElement
+
+$action.addEventListener('click', e => {
+  const action = (e.target as HTMLElement).dataset.action
+  core.execute(action as Actions)
 })

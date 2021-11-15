@@ -1,27 +1,33 @@
 import Konva from 'konva'
-import { Observable, Subscription, switchMapTo } from 'rxjs'
-import { highlight } from './actions/highlight'
-import { move } from './actions/move'
-import { select } from './actions/select'
+import { align, highlight, move, rotate, select } from './actions'
 import { Entity, Layer } from './data/store'
 import { getBackgroundLayer } from './helpers/background'
 import { getDraftLayer } from './helpers/draft'
 import { getSelectionRect } from './helpers/selection-rect'
 import { getTransformer } from './helpers/transfomer'
 
+// eslint-disable-next-line @typescript-eslint/no-empty-function
 const noop = () => {}
-const commands = {
+const actions = {
   highlight,
   select,
   move,
+  rotate,
+  align,
   'draw-grid': noop,
   'create-shape': noop,
 }
 
+export type Actions = keyof typeof actions
+
 const memoShapes = new Map<Entity, Konva.Shape>()
 
+export interface KadConfig {
+  layers?: Layer[]
+}
+
 export default class Kad {
-  static commands = commands
+  static commands = actions
 
   layers = [] as Layer[]
 
@@ -37,16 +43,17 @@ export default class Kad {
    */
   draftLayer: Konva.Layer
 
-  constructor(container: HTMLDivElement, layers?: Layer[]) {
+  constructor(container: HTMLDivElement, config: KadConfig) {
+    const { layers = [] } = config
     this.container = container
-    this.layers = layers ?? []
+    this.layers = layers
     this.stage = this.createStage()
     this.stageLayer = getBackgroundLayer(this.stage)
     this.draftLayer = getDraftLayer(this.stage)
 
     this.renderToKonva()
     // 默认命令
-    this.execute('highlight')
+    // this.execute('highlight')
     this.execute('select')
   }
 
@@ -83,42 +90,10 @@ export default class Kad {
     this.stage.height(height ?? container.scrollHeight)
   }
 
-  command: string
-  commandId = 0
-  sbp?: Subscription
-
-  execute(command: keyof typeof commands): void {
-    if (Object.prototype.hasOwnProperty.call(commands, command)) {
-      const cmd = commands[command]
-      console.groupEnd()
-      console.group(`command: ${command} [${this.commandId}]`)
-
-      // (this.stage)
-      if (this.sbp) {
-        console.log('unsubscribe previous command')
-        this.sbp.unsubscribe()
-      }
-
-      const obs = cmd(this.stage)
-
-      if (obs) {
-        console.log('subscribe')
-        this.sbp = obs.subscribe({
-          complete: () => {
-            if (this.command) {
-              console.log('completed')
-            }
-          },
-        })
-      } else {
-        console.log('lisenting')
-        this.sbp = undefined
-      }
-
-      this.command = command
-      this.commandId += 1
-    } else {
-      console.warn(command, 'not found')
+  execute(action: keyof typeof actions): void {
+    if (Object.prototype.hasOwnProperty.call(actions, action)) {
+      actions[action](this.stageLayer)
+      console.log('execute', action)
     }
   }
 
@@ -140,6 +115,8 @@ export default class Kad {
       shape = new Konva.Path(config)
     } else if (type === 'text') {
       shape = new Konva.Text(config)
+    } else if (type === 'line') {
+      shape = new Konva.Line(config)
     } else {
       // @todo 具体化
       shape = new Konva.Shape(config)

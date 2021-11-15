@@ -1,8 +1,8 @@
 import Konva from 'konva'
 
-type ObserverOptions<V> = {
-  beforeSet?: (value: V, oldValue: V) => V
-  afterSet?: (oldValue: V | undefined, newValue: V) => void
+type ObserverOptions<T, V> = {
+  beforeSet?: (value: V, oldValue: V, target: T) => V
+  afterSet?: (oldValue: V | undefined, newValue: V, target: T) => void
   /**
    * 开始后，会添加 `set{Key}` `get{Key}` 方法，
    * 并且可以通过 `setAttr` `setAttrs`` 更新属性
@@ -27,7 +27,7 @@ const invok = (target: any, key: string, args: any[] | any): any => {
  * Konva style set/get observer decorator
  * @type {[type]}
  */
-export const observer = function <T extends Konva.Node, P extends keyof T>(options?: ObserverOptions<T[P]>) {
+export const observer = function <T extends Konva.Node, P extends keyof T>(options?: ObserverOptions<T, T[P]>) {
   const { beforeSet = id, afterSet, konvaSetterGetter = true } = options || {}
 
   // decorator
@@ -47,14 +47,14 @@ export const observer = function <T extends Konva.Node, P extends keyof T>(optio
         if (dirty) {
           // config callback
           // lifecycle callback
-          const newVal = beforeSet.call(this, nextValue, oldVal)
+          const newVal = beforeSet.call(this, nextValue, oldVal, this)
           invok(this, 'propWillUpdate', { key, oldVal, newVal })
 
           value = nextValue
           invok(this, '__didUpdate', { key, oldVal, newVal })
 
           invok(this, 'propDidUpdate', { key, oldVal, newVal })
-          afterSet?.call(this, oldVal, newVal)
+          afterSet?.call(this, oldVal, newVal, this)
         } else {
           value = nextValue
         }

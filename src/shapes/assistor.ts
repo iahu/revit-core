@@ -76,18 +76,19 @@ export default class Assistor extends Kroup {
   constructor(config = {} as AssistorConfig & Konva.ContainerConfig) {
     super(config)
 
-    this.assignArgs(config, [
-      'startPoint',
-      'endPoint',
-      'strokeWidth',
-      'stroke',
-      'rulerOffset',
-      'crossRadius',
-      'xAxisWidth',
-      'compassRadius',
-      'snapAngles',
-      'snapMaxAngle',
-    ])
+    this.setAttrs(config)
+    // this.assignArgs(config, [
+    //   'startPoint',
+    //   'endPoint',
+    //   'strokeWidth',
+    //   'stroke',
+    //   'rulerOffset',
+    //   'crossRadius',
+    //   'xAxisWidth',
+    //   'compassRadius',
+    //   'snapAngles',
+    //   'snapMaxAngle',
+    // ])
   }
 
   snaped = false

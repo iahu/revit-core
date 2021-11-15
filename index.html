@@ -9,6 +9,7 @@
       body {
         padding: 0;
         margin: 0;
+        overflow: hidden;
       }
       #app {
         width: 100vw;
@@ -17,14 +18,22 @@
       .action-bar {
         position: absolute;
         z-index: 2;
-        top: 0;
+        bottom: 0;
         display: flex;
         width: 100%;
         justify-content: center;
+        align-items: center;
         padding: 6px;
+        box-sizing: border-box;
+      }
+      .action-bar::before {
+        content: "";
+        position: absolute;
+        width: 100%;
+        height: 100%;
         pointer-events: none;
       }
-      .action-bar:hover {
+      .action-bar:hover::before {
         background: #cccccc33;
       }
     </style>
@@ -32,8 +41,10 @@
   <body>
     <div id="app"></div>
     <div class="action-bar">
-      <button class="action move">move</button>
+      <button class="action" data-action="select">select</button>
+      <button class="action" data-action="move">move</button>
+      <button class="action" data-action="rotate">rotate</button>
     </div>
-    <script type="module" src="/src/page.ts"></script>
+    <script type="module" src="/src/preview.ts"></script>
   </body>
 </html>

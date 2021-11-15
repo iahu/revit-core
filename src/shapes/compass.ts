@@ -56,7 +56,7 @@ const getSnapAngle = (snapAngles: number[], snapMaxAngle: number, angle: number)
   }
 }
 
-export default class Compass extends Kroup {
+export default class Compass extends Kroup implements Observed, CompassConfig {
   compass: Konva.Arc
   compassLabel: Konva.Text
   compassStartCross: Cross

@@ -31,8 +31,10 @@ export default defineConfig({
   },
   resolve: {
     alias: {
-      '@helpers': path.resolve(__dirname, 'src/helpers'),
-      '@actions': path.resolve(__dirname, 'src/actions'),
+      '@actions': path.resolve(__dirname, './src/actions'),
+      '@api': path.resolve(__dirname, './src/api'),
+      '@shapes': path.resolve(__dirname, './src/shapes'),
+      '@input': path.resolve(__dirname, './src/input'),
     },
   },
 })

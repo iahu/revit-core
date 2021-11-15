@@ -18,10 +18,12 @@
     "esModuleInterop": true,
     "baseUrl": "./src",
     "paths": {
-      "@helpers/*": ["./helpers/*"],
-      "@actions/*": ["./actions/*"]
+      "@actions/*": ["./actions/*"],
+      "@api/*": ["./api/*"],
+      "@shapes/*": ["./shapes/*"],
+      "@input/*": ["./input/*"]
     }
   },
-  "include": ["./src"],
-  "exclude": ["./src/__action/*.ts"]
+  "include": ["./src", "./vite-env.d.ts"],
+  "exclude": ["./src/__action/*", "./src/renderer"]
 }

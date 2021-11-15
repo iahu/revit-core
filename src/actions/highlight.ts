@@ -1,7 +1,8 @@
 import Konva from 'konva'
 import { isShape } from './helper'
 
-export const highlight = (stage: Konva.Stage) => {
+export const highlight = (layer: Konva.Layer) => {
+  const stage = layer.getStage()
   let shadowColor = ''
   let shadowBlur = 0
 
