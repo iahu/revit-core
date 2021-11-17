@@ -76,8 +76,10 @@ export const move = async (layer: Konva.Layer, config = {} as MoveConfig) => {
     .then(stopListenMousemove)
 
   // apply move action
-  const dest = pupperty.getTransform().decompose()
-  applyMove(nodes, { x: dest.x + padding, y: dest.y + padding })
+  applyMove(nodes, {
+    x: assistor.endPoint[0] - startPoint.x,
+    y: assistor.endPoint[1] - startPoint.y,
+  })
 
   // and then clearup
   assistor.destroy()

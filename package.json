@@ -6,13 +6,15 @@
     "build": "vite build && npm run build:esm",
     "build:esm": "rollup --config rollup.config.js",
     "serve": "vite preview",
-    "watch": "tsc -w --emitDeclarationOnly false",
-    "precommit": "eslint --fix --config .eslintrc.yml src"
+    "watch": "yarn build:esm --watch",
+    "test": "tsc --noEmit -p tsconfig.json",
+    "lint": "eslint --fix --config .eslintrc.yml",
+    "precommit": "echo 'precommit' && lint-staged"
   },
   "lint-staged": {
     "*.{js,ts}": [
-      "eslint --fix",
-      "prettier --write"
+      "prettier --write",
+      "eslint --fix"
     ]
   },
   "main": "./dist/core.umd.js",

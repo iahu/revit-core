@@ -20,7 +20,7 @@ export const isShape = (target: Konva.Node): target is Konva.Shape => target ins
 export const isStage = (target: Konva.Node): target is Konva.Stage => target instanceof Konva.Stage
 export const isTextShape = (shape: Konva.Shape): shape is Konva.Text => shape instanceof Konva.Text
 export const toTarget = <T>(event: Konva.KonvaEventObject<T>) => event.target
-export const filter = <T>(fn: (value: T) => boolean, value: T) => (fn(value) ? value : new Error('unexpected'))
+// export const filter = <T>(fn: (value: T) => boolean, value: T) => (fn(value) ? value : new Error('unexpected'))
 
 export const isType =
   <T>(type: string) =>
@@ -55,7 +55,7 @@ export const onceOn = <T extends string>(
   return target.on(type, handler)
 }
 
-type Unsubscribe = <T>(arg: T) => T
+type Unsubscribe = <T>(arg?: T) => T | undefined
 export const listenOn = <T extends string>(
   target: Konva.Stage | Konva.Layer,
   type: T,
@@ -63,7 +63,7 @@ export const listenOn = <T extends string>(
 ): Unsubscribe => {
   target.on(type, lisenter)
 
-  return <T>(arg: T) => {
+  return <T>(arg?: T) => {
     target.off(type, lisenter)
     return arg
   }
@@ -74,6 +74,14 @@ export const isUnselectable = (target: Konva.Shape | Konva.Stage) =>
 
 export const isSelectable = (target: Konva.Shape | Konva.Stage) => !isUnselectable(target)
 
+export const preventDefault = (event: KonvaEventObject<Event>) => {
+  event.evt.preventDefault()
+  return event
+}
+export const stopImmediatePropagation = (event: KonvaEventObject<Event>) => {
+  event.evt.stopImmediatePropagation()
+  return event
+}
 export const useEventTarget = <T extends KonvaEventObject<Event>>(event: T) => event.target
 export const usePoinerPosition = (stageOrLayer: Stage | Layer | Shape) =>
   stageOrLayer.getStage()?.getPointerPosition() ?? { x: 0, y: 0 }
@@ -86,9 +94,18 @@ export const logger = <T>(v: T) => {
 }
 
 export const getCenterPoint = (node: Konva.Node): Vector2d => {
-  const { x = 0, y = 0 } = node.getAbsolutePosition()
-  const width = node.width()
-  const height = node.height()
-
+  const { x, y, width, height } = node.getClientRect()
   return { x: x + width / 2, y: y + height / 2 }
 }
+
+export const handleOn =
+  <T extends string>(container: Stage | Layer, type: T) =>
+  (handler: (e: GetMultiType<T>) => void) => {
+    container.on(type, handler)
+  }
+
+export const handleOff =
+  <T extends string>(container: Stage | Layer, type: T) =>
+  (handler: (e: GetMultiType<T>) => void) => {
+    container.off(type, handler)
+  }

@@ -40,7 +40,7 @@ export const select = (layer: Layer) => {
     x2 = 0,
     y2 = 0
 
-  stageLayer.on('mousedown touchstart', e => {
+  stage.on('mousedown touchstart', e => {
     // do nothing if we mousedown on any shape
     if (e.target !== stage || stageLayer.hasName('unselectable')) {
       return

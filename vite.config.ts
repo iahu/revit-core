@@ -35,6 +35,7 @@ export default defineConfig({
       '@api': path.resolve(__dirname, './src/api'),
       '@shapes': path.resolve(__dirname, './src/shapes'),
       '@input': path.resolve(__dirname, './src/input'),
+      '@helpers': path.resolve(__dirname, './src/helpers'),
     },
   },
 })

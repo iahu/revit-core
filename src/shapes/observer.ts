@@ -12,8 +12,8 @@ type ObserverOptions<T, V> = {
 }
 const toCapCase = (s: string, prefix = '') => prefix + s[0].toUpperCase() + s.slice(1)
 
-export type Getter<T extends {}, K extends keyof T> = () => T[K]
-export type Setter<T extends {}, K extends keyof T> = (value: T[K]) => void
+export type Getter<T extends Record<string, any>, K extends keyof T> = () => T[K]
+export type Setter<T extends Record<string, any>, K extends keyof T> = (value: T[K]) => void
 const id = <T>(v: T) => v
 
 const invok = (target: any, key: string, args: any[] | any): any => {
@@ -23,15 +23,31 @@ const invok = (target: any, key: string, args: any[] | any): any => {
   }
 }
 
+export type GetterName<T extends string> = `get${Capitalize<T>}`
+export type SetterName<T extends string> = `set${Capitalize<T>}`
+
+type KonvaGetterSetter<T extends string, V> = {
+  [K in GetterName<T>]: () => V
+} & {
+  [K in SetterName<T>]: (value: V) => void
+}
+
+type WithKonvaGetterSetter<T, K extends string, V> = T & KonvaGetterSetter<K, V>
+
 /**
  * Konva style set/get observer decorator
  * @type {[type]}
  */
-export const observer = function <T extends Konva.Node, P extends keyof T>(options?: ObserverOptions<T, T[P]>) {
+export const observer = function <T extends Konva.Node, P extends string & keyof T>(
+  options?: ObserverOptions<T, T[P]>,
+) {
   const { beforeSet = id, afterSet, konvaSetterGetter = true } = options || {}
 
   // decorator
-  return function (target: T, key: string) {
+  return function <R extends T = T, S extends string & keyof T = P>(
+    target: R,
+    key: S,
+  ): asserts target is WithKonvaGetterSetter<R, S, R[S]> {
     let value: T[P] | undefined
     let dirty = false
 

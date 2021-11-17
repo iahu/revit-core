@@ -21,7 +21,8 @@
       "@actions/*": ["./actions/*"],
       "@api/*": ["./api/*"],
       "@shapes/*": ["./shapes/*"],
-      "@input/*": ["./input/*"]
+      "@input/*": ["./input/*"],
+      "@helpers/*": ["./helpers/*"]
     }
   },
   "include": ["./src", "./vite-env.d.ts"],

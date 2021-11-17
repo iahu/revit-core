@@ -39,7 +39,7 @@ export default class Kroup extends Konva.Group implements Observed {
    */
   updated = Promise.resolve(false)
 
-  __didUpdate() {
+  private __didUpdate() {
     if (!this.__hasRendered) {
       this.updated = Promise.resolve(false)
       return
