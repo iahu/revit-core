@@ -6,7 +6,6 @@ type ObserverOptions<T, V> = {
   /**
    * 开始后，会添加 `set{Key}` `get{Key}` 方法，
    * 并且可以通过 `setAttr` `setAttrs`` 更新属性
-   * @type {[type]}
    */
   konvaSetterGetter?: boolean
 }
@@ -36,7 +35,6 @@ type WithKonvaGetterSetter<T, K extends string, V> = T & KonvaGetterSetter<K, V>
 
 /**
  * Konva style set/get observer decorator
- * @type {[type]}
  */
 export const observer = function <T extends Konva.Node, P extends string & keyof T>(
   options?: ObserverOptions<T, T[P]>,

@@ -15,7 +15,7 @@ export const rotate = async (layer: Layer) => {
    * get centerPoint
    */
   const centerPoint = getCenterPoint(node)
-  const angler = new Angler({ name: 'rotate-angler', centerPoint })
+  const angler = new Angler({ name: 'rotate-angler unselectable', centerPoint })
   layer.add(angler)
 
   // update startPoint
