@@ -22,6 +22,7 @@ export const rotate = async (layer: Layer) => {
   const stopUpdateStartPoint = listenOn(stage, 'mousemove', e => {
     const startPoint = usePoinerPosition(e.target)
     angler.startPoint = startPoint
+    angler.endPoint = startPoint
   })
   // update until click
   await input(stage, 'click').then(stopUpdateStartPoint)
@@ -40,7 +41,6 @@ export const rotate = async (layer: Layer) => {
   applyRotate(node, angler.labelArc.$arc.angle())
   // clearup
   angler.destroy()
-  angler.remove()
 
   // return action clearup callback
   return () => {}
