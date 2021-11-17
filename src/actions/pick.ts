@@ -1,14 +1,16 @@
 import { Layer } from 'konva/lib/Layer'
 import { Shape } from 'konva/lib/Shape'
-import { isShape, onceOn } from './helper'
+import { isSelectable, isShape, listenOn } from './helper'
 
 export const pick = (container: Layer) => {
   return new Promise<Shape>(resolve => {
-    onceOn(container, 'click', event => {
+    const stop = listenOn(container, 'click', event => {
       event.evt.preventDefault()
+      const { target } = event
 
-      if (isShape(event.target)) {
-        resolve(event.target)
+      if (isShape(target) && isSelectable(target)) {
+        resolve(target)
+        stop()
       }
     })
   })

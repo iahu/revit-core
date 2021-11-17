@@ -30,7 +30,7 @@ export const select = (layer: Layer) => {
     })
     nodes.forEach(node => {
       selection.set(node.id(), { ...node.getAttrs() })
-      node.setAttrs({ stroke: '#0099ff' })
+      node.setAttrs({ stroke: '#003bbd' })
     })
     transformer.nodes(nodes)
   }

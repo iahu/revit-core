@@ -38,6 +38,11 @@ export interface CompassConfig {
    * 自动捕捉角度左右范围
    */
   snapMaxAngle?: number
+
+  /**
+   * compass arc label offset
+   */
+  labelOffset?: number
 }
 
 export const mapPoint = (point: number[], oldPoint: number[]) => point.concat(oldPoint.slice(point.length))
@@ -78,19 +83,25 @@ export default class Compass extends Kroup implements Observed, CompassConfig {
   @observer<Compass, 'snapAngles'>() snapAngles = [0, 45, 90, 135, 180]
   @observer<Compass, 'snapMaxAngle'>() snapMaxAngle = 1
 
+  @observer<Compass, 'labelOffset'>() labelOffset = 14
+
   constructor(config = {} as CompassConfig & Konva.ContainerConfig) {
     super(config)
+
+    this.setAttrs(config)
   }
+
+  snaped = false
 
   /**
    * 角度捕捉后的 Promise 回调，参数是 `true`
    */
-  snaped = false
+  hasSnaped = Promise.resolve(false)
 
   update() {
     const [x, y] = this.startPoint
     let [x2, y2] = this.endPoint
-    const { xAxisWidth, snapMaxAngle, snapAngles, stroke, strokeWidth, compassRadius, crossRadius } = this
+    const { xAxisWidth, snapMaxAngle, snapAngles, stroke, strokeWidth, compassRadius, crossRadius, labelOffset } = this
 
     const t = new Konva.Transform([x2 - x, y2 - y, x2, y2, x, y])
     const attrs = t.decompose()
@@ -109,6 +120,7 @@ export default class Compass extends Kroup implements Observed, CompassConfig {
         this.fire('snap.assistor')
 
         this.snaped = true
+        this.hasSnaped = Promise.resolve(true)
       }
       rotation = snapedAngle
       this.yAxis.setAttrs({
@@ -134,6 +146,7 @@ export default class Compass extends Kroup implements Observed, CompassConfig {
       x: x + compassRadius * Math.cos(compassLabelRad),
       y: y + compassRadius * Math.sin(compassLabelRad),
       offsetX: this.compassLabel.width() / 2,
+      offsetY: labelOffset,
       fill: stroke,
       text: angleText,
       rotation: rotation / 2 + 90,

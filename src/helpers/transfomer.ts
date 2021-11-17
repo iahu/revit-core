@@ -18,7 +18,7 @@ export const getTransformer = (stage: Konva.Stage) => {
     padding: 3,
     draggable: true,
     useSingleNodeRotation: false,
-    // borderStroke: '',
+    // borderStroke: '',//选中的边框
     // visible: false,
   })
 

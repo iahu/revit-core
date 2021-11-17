@@ -7,7 +7,7 @@ import { getSelectionRect } from './helpers/selection-rect'
 import { getTransformer } from './helpers/transfomer'
 
 // eslint-disable-next-line @typescript-eslint/no-empty-function
-const noop = () => {}
+const noop = () => { }
 const actions = {
   highlight,
   select,
@@ -53,7 +53,7 @@ export default class Kad {
 
     this.renderToKonva()
     // 默认命令
-    // this.execute('highlight')
+    this.execute('highlight')
     this.execute('select')
   }
 

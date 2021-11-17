@@ -6,7 +6,7 @@ import { pick } from './pick'
 import { input } from './input'
 import { getBackgroundLayer } from '../helpers/background'
 import { getTransformer } from '../helpers/transfomer'
-import { listenOn, useEventTarget, usePoinerPosition, vector2Point } from './helper'
+import { listenOn, stopImmediatePropagation, useEventTarget, usePoinerPosition, vector2Point } from './helper'
 
 type MoveConfig = {
   snapAngle?: number
@@ -25,9 +25,13 @@ export const move = async (layer: Konva.Layer, config = {} as MoveConfig) => {
   }
 
   // get start point
-  const startPoint = await input(stage, 'click').then(useEventTarget).then(usePoinerPosition)
+  const startPoint = await input(stage, 'click')
+    .then(stopImmediatePropagation)
+    .then(useEventTarget)
+    .then(usePoinerPosition)
   if (!transformer.nodes().length) {
     transformer.nodes(nodes)
+    transformer.setAttr('stroke', '#0099ff')
   }
 
   // setup assistor
@@ -71,9 +75,7 @@ export const move = async (layer: Konva.Layer, config = {} as MoveConfig) => {
 
   // until get end point from click event
   // but here we use pupperty to catch the end point
-  await input(stage, 'click')
-    // .then(useEventTarget).then(usePoinerPosition)
-    .then(stopListenMousemove)
+  await input(stage, 'click').then(stopImmediatePropagation).then(stopListenMousemove)
 
   // apply move action
   applyMove(nodes, {
@@ -85,4 +87,5 @@ export const move = async (layer: Konva.Layer, config = {} as MoveConfig) => {
   assistor.destroy()
   pupperty.destroy()
   bgLayer.removeName('unselectable')
+  transformer.setAttr('stroke', '')
 }

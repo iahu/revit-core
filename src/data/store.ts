@@ -38,10 +38,7 @@ export interface TextEntity extends BaseEntity, Konva.TextConfig {
 }
 export interface LineEntity extends BaseEntity, Konva.TextConfig {
   id: string
-  type: 'line',
-  /**是否是居中的对象 */
-  alignTarget: boolean
-
+  type: 'line'
 }
 
 export type Entity = SvgPathEntity | ImgUrlEntity | ImgEntity | TextEntity | LineEntity
