@@ -1,3 +1,4 @@
+import { KAD_ACTION_NS } from '@actions/helper'
 import Konva from 'konva'
 import { align, highlight, move, rotate, select } from './actions'
 import { Entity, Layer } from './data/store'
@@ -7,7 +8,7 @@ import { getSelectionRect } from './helpers/selection-rect'
 import { getTransformer } from './helpers/transfomer'
 
 // eslint-disable-next-line @typescript-eslint/no-empty-function
-const noop = () => { }
+const noop = () => {}
 const actions = {
   highlight,
   select,
@@ -90,8 +91,25 @@ export default class Kad {
     this.stage.height(height ?? container.scrollHeight)
   }
 
+  clearBeforeExecute(container: Konva.Stage | Konva.Layer) {
+    const { eventListeners } = container
+    Object.keys(eventListeners).forEach(key => {
+      const listeners = eventListeners[key]
+      listeners.forEach(item => {
+        const { name, handler } = item
+        if (name === KAD_ACTION_NS) {
+          container.off(`${key}.${name}`, handler)
+        }
+      })
+    })
+  }
+
   execute(action: keyof typeof actions): void {
     if (Object.prototype.hasOwnProperty.call(actions, action)) {
+      // clear action handlers before execute next action
+      this.clearBeforeExecute(this.stage)
+      this.clearBeforeExecute(this.stageLayer)
+      // excecute
       actions[action](this.stageLayer)
       console.log('execute', action)
     }

@@ -42,17 +42,22 @@ export type GetMultiType<T extends string> = T extends `${infer A} ${infer B}`
   ? KonvaEventObject<TouchEvent>
   : KonvaEventObject<Event>
 
+export const KAD_ACTION_NS = 'kadAction'
+export const withKadActionNS = (s: string) => (s.includes('.') ? s : `${s}.${KAD_ACTION_NS}`)
+export const ensureWithNS = (type: string) => type.split(' ').map(withKadActionNS).join(' ')
+
 export const onceOn = <T extends string>(
   target: Konva.Stage | Konva.Layer,
   type: T,
   lisenter: (event: GetMultiType<T>) => void,
 ) => {
+  const typeWithNS = ensureWithNS(type)
   const handler = (event: GetMultiType<T>) => {
     lisenter(event)
-    target.off(type, handler)
+    target.off(typeWithNS, handler)
   }
 
-  return target.on(type, handler)
+  return target.on(typeWithNS, handler)
 }
 
 type Unsubscribe = <T>(arg?: T) => T | undefined
@@ -61,10 +66,12 @@ export const listenOn = <T extends string>(
   type: T,
   lisenter: (event: GetMultiType<T>) => void,
 ): Unsubscribe => {
-  target.on(type, lisenter)
+  const typeWithNS = ensureWithNS(type)
+
+  target.on(typeWithNS, lisenter)
 
   return <T>(arg?: T) => {
-    target.off(type, lisenter)
+    target.off(typeWithNS, lisenter)
     return arg
   }
 }

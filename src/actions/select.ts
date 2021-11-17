@@ -4,6 +4,7 @@ import { getBackgroundLayer } from '../helpers/background'
 import { getDraftLayer } from '../helpers/draft'
 import { getSelectionRect } from '../helpers/selection-rect'
 import { getTransformer } from '../helpers/transfomer'
+import { listenOn } from './helper'
 
 const selection = new Map<string, Konva.NodeConfig>()
 
@@ -40,7 +41,7 @@ export const select = (layer: Layer) => {
     x2 = 0,
     y2 = 0
 
-  stage.on('mousedown touchstart', e => {
+  const stopMousedown = listenOn(stage, 'mousedown touchstart', e => {
     // do nothing if we mousedown on any shape
     if (e.target !== stage || stageLayer.hasName('unselectable')) {
       return
@@ -60,7 +61,7 @@ export const select = (layer: Layer) => {
     selectionRect.height(0)
   })
 
-  stage.on('mousemove touchmove', e => {
+  const stopMousemove = listenOn(stage, 'mousemove touchmove', e => {
     // do nothing if we didn't start selection
     if (!selectionRect.visible() || stageLayer.hasName('unselectable')) {
       return
@@ -77,7 +78,7 @@ export const select = (layer: Layer) => {
     })
   })
 
-  stage.on('mouseup touchend', e => {
+  const stopMouseup = listenOn(stage, 'mouseup touchend', e => {
     // do nothing if we didn't start selection
     if (!selectionRect.visible()) {
       return
@@ -105,7 +106,7 @@ export const select = (layer: Layer) => {
   })
 
   // clicks should select/deselect shapes
-  stage.on('click tap', function (e) {
+  const stopClick = listenOn(stage, 'click tap', function (e) {
     // if we are selecting with rect, do nothing
     if (selectionRect.visible()) {
       setNodes([])
@@ -144,4 +145,11 @@ export const select = (layer: Layer) => {
       setNodes(nodes)
     }
   })
+
+  return () => {
+    stopMousedown()
+    stopMousemove()
+    stopMouseup()
+    stopClick()
+  }
 }

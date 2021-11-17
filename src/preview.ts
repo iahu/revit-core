@@ -9,7 +9,7 @@ const layers: InitStore['layers'] = [
     entities: [
       {
         id: 'ent-1',
-        x: 100,
+        x: 200,
         y: 100,
         width: 200,
         height: 200,
