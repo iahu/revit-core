@@ -1,7 +1,7 @@
 import Konva from 'konva'
 import Cross from './cross'
 import Kroup from './kroup'
-import { observer } from './observer'
+import { Observed, observer } from './observer'
 
 export interface RulerConfig {
   /**
@@ -24,7 +24,7 @@ export interface RulerConfig {
   strokeWidth?: number
 }
 
-export default class Ruler extends Kroup {
+export default class Ruler extends Kroup implements Observed {
   ruler: Konva.Line
   rulerLabel: Konva.Text
   startCross: Cross
