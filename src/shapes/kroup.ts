@@ -31,8 +31,14 @@ export default class Kroup extends Konva.Group implements Observed {
     })
   }
 
-  propWillChange(prop: ChangedProp) {}
-  propDidChange(prop: ChangedProp) {}
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  propWillChange(prop: ChangedProp) {
+    throw new Error('not implemented')
+  }
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  propDidChange(prop: ChangedProp) {
+    throw new Error('not implemented')
+  }
 
   /**
    * 更新后的 Promise 回调

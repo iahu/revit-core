@@ -1,4 +1,5 @@
 import Konva from 'konva'
+import { Group } from 'konva/lib/Group'
 import { Layer } from 'konva/lib/Layer'
 import { KonvaEventObject } from 'konva/lib/Node'
 import { Shape } from 'konva/lib/Shape'
@@ -76,10 +77,12 @@ export const listenOn = <T extends string>(
   }
 }
 
-export const isUnselectable = (target: Konva.Shape | Konva.Stage) =>
+export type SelectableNodes = Shape | Stage | Group
+
+export const isUnselectable = (target: SelectableNodes) =>
   target.hasName('unselectable') || target.getLayer()?.hasName('unselectable')
 
-export const isSelectable = (target: Konva.Shape | Konva.Stage) => !isUnselectable(target)
+export const isSelectable = (target: SelectableNodes) => !isUnselectable(target)
 
 export const preventDefault = (event: KonvaEventObject<Event>) => {
   event.evt.preventDefault()

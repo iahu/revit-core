@@ -1,11 +1,13 @@
 import Konva from 'konva'
 import { isSelectable, isShape } from './helper'
+import { HIGHLIGHT_COLOR } from './select'
 
 export const highlight = (layer: Konva.Layer) => {
   const stage = layer.getStage()
   let shadowColor = ''
   let shadowBlur = 0
-  let targetOpacity = 1
+  let opacity = 1
+  let stroke = ''
 
   stage.on('mouseover', event => {
     const { target } = event
@@ -13,9 +15,20 @@ export const highlight = (layer: Konva.Layer) => {
       // highlight
       shadowColor = target.shadowColor()
       shadowBlur = target.shadowBlur()
-      targetOpacity = target.opacity()
-      target.shadowColor('#3399ff')
-      target.shadowBlur(2)
+      opacity = target.opacity()
+      stroke = target.stroke()
+
+      // backup
+      target.setAttrs({ backupOpacity: opacity, backupStroke: stroke })
+      /**
+       * highlight style
+       */
+      // shadow
+      target.shadowColor(HIGHLIGHT_COLOR)
+      target.shadowBlur(1)
+      // stroke
+      target.stroke(HIGHLIGHT_COLOR)
+      // opacity
       target.opacity(1)
     }
   })
@@ -24,9 +37,17 @@ export const highlight = (layer: Konva.Layer) => {
     const { target } = event
     if (isShape(target) && target.id() !== 'selection-rect' && isSelectable(target)) {
       // recover
-      target.shadowColor(shadowColor)
-      target.shadowBlur(shadowBlur)
-      target.opacity(targetOpacity)
+      const attrs = target.getAttrs()
+      if (attrs.stroke === HIGHLIGHT_COLOR) {
+        target.stroke(stroke)
+      }
+      if (attrs.shadowColor === HIGHLIGHT_COLOR) {
+        target.shadowColor(shadowColor)
+        target.shadowBlur(shadowBlur)
+      }
+      if (attrs.opacity === 1) {
+        target.opacity(opacity)
+      }
     }
   })
 }

@@ -2,25 +2,12 @@ import { KAD_ACTION_NS } from '@actions/helper'
 import { Door } from '@shapes/door'
 import Kroup from '@shapes/kroup'
 import Konva from 'konva'
-import { align, highlight, move, rotate, select, copy } from './actions'
+import * as actions from './actions'
 import { Entity, Layer } from './data/store'
 import { getBackgroundLayer } from './helpers/background'
 import { getDraftLayer } from './helpers/draft'
 import { getSelectionRect } from './helpers/selection-rect'
 import { getTransformer } from './helpers/transfomer'
-
-// eslint-disable-next-line @typescript-eslint/no-empty-function
-const noop = () => {}
-const actions = {
-  highlight,
-  select,
-  move,
-  rotate,
-  align,
-  copy,
-  'draw-grid': noop,
-  'create-shape': noop,
-}
 
 export type Actions = keyof typeof actions
 
@@ -31,7 +18,7 @@ export interface KadConfig {
 }
 
 export default class Kad {
-  static commands = actions
+  static actions = actions
 
   layers = [] as Layer[]
 
@@ -107,14 +94,14 @@ export default class Kad {
     })
   }
 
-  execute(action: keyof typeof actions, args?: any): void {
+  execute(action: Actions, args?: any): void {
     if (Object.prototype.hasOwnProperty.call(actions, action)) {
       // clear action handlers before execute next action
       this.clearBeforeExecute(this.stage)
       this.clearBeforeExecute(this.stageLayer)
       // excecute
-      actions[action](this.stageLayer, args)
       console.log('execute', action)
+      actions[action](this.stageLayer, args)
     }
   }
   private createShape = (entity: Entity) => {

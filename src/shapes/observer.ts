@@ -15,7 +15,7 @@ export type Getter<T extends Record<string, any>, K extends keyof T> = () => T[K
 export type Setter<T extends Record<string, any>, K extends keyof T> = (value: T[K]) => void
 const id = <T>(v: T) => v
 
-const invok = (target: any, key: string, args: any[] | any): any => {
+const invok = (target: any, key: string, args: any[] | any) => {
   const method = Reflect.get(target, key)
   if (typeof method === 'function') {
     return Reflect.apply(method, target, Array.isArray(args) ? args : [args])
