@@ -40,6 +40,8 @@ export default class Cross extends Konva.Shape {
     // /
     context.moveTo(x, -y)
     context.lineTo(-x, y)
+
+    context._context.stroke()
     context.stroke()
 
     context.fillStrokeShape(this)

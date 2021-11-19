@@ -1,11 +1,10 @@
+import { applyMove } from '@api/move'
 import Konva from 'konva'
 import { Layer } from 'konva/lib/Layer'
-import { KonvaEventObject } from 'konva/lib/Node'
 import { Shape, ShapeConfig } from 'konva/lib/Shape'
 import { Stage } from 'konva/lib/Stage'
+import { pick } from '.'
 import { getDraftLayer } from '../helpers/draft'
-import { listenOn, useEventTarget } from './helper'
-import { input } from './input'
 type IAlignTarget = Stage | Shape<ShapeConfig> | null
 let AlignStage: Konva.Stage
 let t1: IAlignTarget
@@ -18,9 +17,17 @@ export const align = async (layer: Layer) => {
   const draftLayer = getDraftLayer(AlignStage)
   draftLayer.visible(true)
   clearLines()
-  t1 = t2 = null
-  await input(stage, 'click').then(onGetTarget)
-  await input(stage, 'click').then(onGetTarget)
+
+  t1 = await pick(layer)
+  t1.opacity(1)
+  t1.name('unselectable')
+  drawHelpLine(t1)
+  t2 = await pick(layer)
+  t2.opacity(1)
+  t2.name('unselectable')
+  const tx = t1.getClientRect().x - t2.getClientRect().x
+  applyMove([t2], { x: tx, y: 0 })
+
   clearLines()
   draftLayer.visible(false)
 }
@@ -29,19 +36,6 @@ function clearLines() {
     line.visible(false)
   })
   helpLines = []
-}
-function onGetTarget(e: KonvaEventObject<MouseEvent>) {
-  const t = e.target
-  if (!t1) {
-    t1 = t
-    t1.opacity(1)
-    t1.name('unselectable')
-    drawHelpLine(t1)
-  } else if (!t2 && t1 != t) {
-    t2 = t
-    t2.opacity(1)
-    t2.name('unselectable')
-  }
 }
 function drawHelpLine(target: IAlignTarget) {
   //画辅助线

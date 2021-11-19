@@ -22,3 +22,12 @@ export const getAngle = (p1: Point, p2: Point) => {
 export const getScalar = (p1: Vector2d, p2: Vector2d) => {
   return [p2.x - p1.x, p2.y - p1.y, p1.x, p1.y]
 }
+
+export const toDeg360 = (deg: number) => {
+  return (360 + deg) % 360
+}
+
+export const toDeg180 = (deg: number) => {
+  const fullDeg = toDeg360(deg)
+  return fullDeg > 180 ? fullDeg - 360 : fullDeg
+}

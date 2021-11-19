@@ -111,8 +111,9 @@ export default class Compass extends Kroup implements Observed, CompassConfig {
 
     // 角度捕捉
     if (typeof snapedAngle === 'number') {
-      const dx2 = x + scaleX * Math.cos(snapedAngle * DEG_TO_RAD)
-      const dy2 = y + scaleX * Math.sin(snapedAngle * DEG_TO_RAD)
+      const snapedRad = snapedAngle * DEG_TO_RAD
+      const dx2 = x + scaleX * Math.cos(snapedRad)
+      const dy2 = y + scaleX * Math.sin(snapedRad)
       if (dx2 !== x2 && dy2 !== y2) {
         x2 = dx2
         y2 = dy2
@@ -124,12 +125,7 @@ export default class Compass extends Kroup implements Observed, CompassConfig {
       }
       rotation = snapedAngle
       this.yAxis.setAttrs({
-        points: [
-          x,
-          y,
-          x + xAxisWidth * Math.cos(snapedAngle * DEG_TO_RAD),
-          y + xAxisWidth * Math.sin(snapedAngle * DEG_TO_RAD),
-        ],
+        points: [x, y, x + xAxisWidth * Math.cos(snapedRad), y + xAxisWidth * Math.sin(snapedRad)],
         visible: true,
       })
     } else {

@@ -1,6 +1,8 @@
 import { KAD_ACTION_NS } from '@actions/helper'
+import { Door } from '@shapes/door'
+import Kroup from '@shapes/kroup'
 import Konva from 'konva'
-import { align, highlight, move, rotate, select } from './actions'
+import { align, highlight, move, rotate, select, copy } from './actions'
 import { Entity, Layer } from './data/store'
 import { getBackgroundLayer } from './helpers/background'
 import { getDraftLayer } from './helpers/draft'
@@ -15,13 +17,14 @@ const actions = {
   move,
   rotate,
   align,
+  copy,
   'draw-grid': noop,
   'create-shape': noop,
 }
 
 export type Actions = keyof typeof actions
 
-const memoShapes = new Map<Entity, Konva.Shape>()
+const memoShapes = new Map<Entity, Konva.Shape | Konva.Group>()
 
 export interface KadConfig {
   layers?: Layer[]
@@ -104,29 +107,33 @@ export default class Kad {
     })
   }
 
-  execute(action: keyof typeof actions): void {
+  execute(action: keyof typeof actions, args?: any): void {
     if (Object.prototype.hasOwnProperty.call(actions, action)) {
       // clear action handlers before execute next action
       this.clearBeforeExecute(this.stage)
       this.clearBeforeExecute(this.stageLayer)
       // excecute
-      actions[action](this.stageLayer)
+      actions[action](this.stageLayer, args)
       console.log('execute', action)
     }
   }
-
   private createShape = (entity: Entity) => {
     const memo = memoShapes.get(entity)
     if (memo) {
       return memo
     }
 
-    const { type, ...config } = entity
+    const { type, ...userConfig } = entity
+    const config = {
+      fillAfterStrokeEnabled: true,
+      draggable: true,
+      ...userConfig,
+    }
 
-    let shape: Konva.Shape
+    let shape: Konva.Shape | Kroup
     if (type === 'imgUrl') {
       const image = new Image()
-      image.src = config.imgUrl
+      image.src = entity.imgUrl
       shape = new Konva.Image({ image })
       shape.setAttrs(config)
     } else if (type === 'svgPath') {
@@ -135,13 +142,11 @@ export default class Kad {
       shape = new Konva.Text(config)
     } else if (type === 'line') {
       shape = new Konva.Line(config)
+    } else if (type === 'door') {
+      shape = new Door(config)
     } else {
       // @todo 具体化
       shape = new Konva.Shape(config)
-    }
-
-    if (typeof config.draggable !== 'boolean') {
-      shape.draggable(true)
     }
 
     memoShapes.set(entity, shape)

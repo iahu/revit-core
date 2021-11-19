@@ -1,4 +1,5 @@
 export * from './align'
+export * from './copy'
 export * from './select'
 export * from './highlight'
 export * from './move'
