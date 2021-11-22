@@ -5,7 +5,10 @@ import { isSelectable, listenOn, useEventTarget, usePoinerPosition } from './hel
 
 export const dragSelect = async (layer: Layer) => {
   const stage = layer.getStage()
-  const startPoint = await input(stage, 'mousedown').then(useEventTarget).then(usePoinerPosition)
+  const startPoint = await input(stage, 'mousedown')
+    .then(useEventTarget)
+    .then(t => (t.draggable() ? t : Promise.reject('not draggable')))
+    .then(usePoinerPosition)
   const selectionRect = new Konva.Rect({ ...startPoint, name: 'unselectable', fill: '#0099ff33', stroke: '#0099ff' })
   layer.add(selectionRect)
 

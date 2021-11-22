@@ -1,8 +1,16 @@
 import Konva from 'konva'
-import { ChangedProp, Observed } from './observer'
+import { ContainerConfig } from 'konva/lib/Container'
+import { ChangedProp, Observed, observer } from './observer'
 
 const normalized = (result: (Konva.Group | Konva.Shape)[] | null) => {
   return result ? result.filter(v => !!v) : []
+}
+
+export interface KroupOptions extends ContainerConfig {
+  stroke?: string | CanvasGradient
+  strokeWidth?: number
+  shadowColor?: string | CanvasGradient
+  shadowBlur?: number
 }
 
 /**
@@ -10,6 +18,11 @@ const normalized = (result: (Konva.Group | Konva.Shape)[] | null) => {
  * 如果有响应式参数请用 @observer() 装饰器添加
  */
 export default class Kroup extends Konva.Group implements Observed {
+  @observer<Kroup, 'stroke'>() stroke = '#333'
+  @observer<Kroup, 'strokeWidth'>() strokeWidth = 1
+  @observer<Kroup, 'shadowColor'>() shadowColor = ''
+  @observer<Kroup, 'shadowBlur'>() shadowBlur = 0
+
   constructor(config: Konva.ContainerConfig) {
     super(config)
     // lazy init
@@ -120,7 +133,7 @@ export default class Kroup extends Konva.Group implements Observed {
   }
 
   private __render() {
-    if (this.__hasRendered || this.children?.length) {
+    if (this.__hasRendered) {
       return
     }
 

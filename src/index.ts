@@ -1,6 +1,7 @@
 import { KAD_ACTION_NS } from '@actions/helper'
 import { Door } from '@shapes/door'
 import Kroup from '@shapes/kroup'
+import { SvgButton } from '@shapes/svg-button'
 import Konva from 'konva'
 import * as actions from './actions'
 import { Entity, Layer } from './data/store'
@@ -10,8 +11,6 @@ import { getSelectionRect } from './helpers/selection-rect'
 import { getTransformer } from './helpers/transfomer'
 
 export type Actions = keyof typeof actions
-
-const memoShapes = new Map<Entity, Konva.Shape | Konva.Group>()
 
 export interface KadConfig {
   layers?: Layer[]
@@ -104,15 +103,12 @@ export default class Kad {
       actions[action](this.stageLayer, args)
     }
   }
-  private createShape = (entity: Entity) => {
-    const memo = memoShapes.get(entity)
-    if (memo) {
-      return memo
-    }
 
+  private createShape = (entity: Entity) => {
     const { type, ...userConfig } = entity
     const config = {
       fillAfterStrokeEnabled: true,
+      shadowForStrokeEnabled: false,
       draggable: true,
       ...userConfig,
     }
@@ -129,14 +125,17 @@ export default class Kad {
       shape = new Konva.Text(config)
     } else if (type === 'line') {
       shape = new Konva.Line(config)
+    } else if (type === 'rect') {
+      shape = new Konva.Rect(config)
     } else if (type === 'door') {
       shape = new Door(config)
+    } else if (type === 'svgButton') {
+      shape = new SvgButton(config)
     } else {
       // @todo 具体化
       shape = new Konva.Shape(config)
     }
 
-    memoShapes.set(entity, shape)
     return shape
   }
 

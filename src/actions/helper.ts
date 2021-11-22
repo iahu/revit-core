@@ -1,4 +1,5 @@
 import Konva from 'konva'
+import { Container } from 'konva/lib/Container'
 import { Group } from 'konva/lib/Group'
 import { Layer } from 'konva/lib/Layer'
 import { KonvaEventObject } from 'konva/lib/Node'
@@ -47,11 +48,7 @@ export const KAD_ACTION_NS = 'kadAction'
 export const withKadActionNS = (s: string) => (s.includes('.') ? s : `${s}.${KAD_ACTION_NS}`)
 export const ensureWithNS = (type: string) => type.split(' ').map(withKadActionNS).join(' ')
 
-export const onceOn = <T extends string>(
-  target: Konva.Stage | Konva.Layer,
-  type: T,
-  lisenter: (event: GetMultiType<T>) => void,
-) => {
+export const onceOn = <T extends string>(target: Konva.Node, type: T, lisenter: (event: GetMultiType<T>) => void) => {
   const typeWithNS = ensureWithNS(type)
   const handler = (event: GetMultiType<T>) => {
     lisenter(event)
@@ -77,10 +74,15 @@ export const listenOn = <T extends string>(
   }
 }
 
-export type SelectableNodes = Shape | Stage | Group
+export type SelectableNodes = Shape | Stage | Group | Container
 
-export const isUnselectable = (target: SelectableNodes) =>
-  target.hasName('unselectable') || target.getLayer()?.hasName('unselectable')
+export const isUnselectable = (target: SelectableNodes) => {
+  return (
+    target.hasName('unselectable') ||
+    target.parent?.hasName('unselectable') ||
+    target.getLayer()?.hasName('unselectable')
+  )
+}
 
 export const isSelectable = (target: SelectableNodes) => !isUnselectable(target)
 

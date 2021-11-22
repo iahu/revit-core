@@ -8,7 +8,7 @@ export type Point = {
 }
 export type Position = [number, number]
 
-export type EntityType = 'svgPath' | 'imgUrl' | 'img' | 'text' | 'line' | 'door'
+export type EntityType = 'svgPath' | 'imgUrl' | 'img' | 'text' | 'line' | 'rect' | 'door' | 'svgButton'
 export interface BaseEntity extends Konva.ShapeConfig {
   id: string
   type: EntityType
@@ -36,16 +36,35 @@ export interface TextEntity extends BaseEntity, Konva.TextConfig {
   type: 'text'
   text: string
 }
+
 export interface LineEntity extends BaseEntity, Konva.TextConfig {
   id: string
   type: 'line'
 }
+
+export interface RectEntity extends BaseEntity, Konva.TextConfig {
+  id: string
+  type: 'rect'
+}
+
 export interface DoorEntity extends BaseEntity, Konva.TextConfig {
   id: string
   type: 'door'
 }
+export interface SvgButtonEntity extends BaseEntity, Konva.TextConfig {
+  id: string
+  type: 'svgButton'
+}
 
-export type Entity = SvgPathEntity | ImgUrlEntity | ImgEntity | TextEntity | LineEntity | DoorEntity
+export type Entity =
+  | SvgPathEntity
+  | ImgUrlEntity
+  | ImgEntity
+  | TextEntity
+  | LineEntity
+  | RectEntity
+  | DoorEntity
+  | SvgButtonEntity
 
 export interface Layer extends Konva.LayerConfig {
   id: string

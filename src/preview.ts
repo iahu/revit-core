@@ -32,6 +32,21 @@ const layers: InitStore['layers'] = [
         type: 'text' as const,
         text: 'revit editor',
       },
+      {
+        id: 'ent-4',
+        x: 50,
+        y: 50,
+        type: 'door' as const,
+      },
+      // {
+      //   id: 'ent-5',
+      //   x: 30,
+      //   y: 30,
+      //   width: 100,
+      //   height: 20,
+      //   fill: 'red',
+      //   type: 'rect' as const,
+      // },
     ],
   },
 ]

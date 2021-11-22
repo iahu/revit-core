@@ -1,4 +1,12 @@
 import Konva from 'konva'
+import { KonvaEventObject } from 'konva/lib/Node'
+
+export interface KonvaChangeEvent<T extends Konva.Node, K extends string & keyof T> extends KonvaEventObject<Event> {
+  currentTarget: T
+  newVal: T[K]
+  oldVal: T[K]
+  type: `${K}Change`
+}
 
 type ObserverOptions<T, V> = {
   beforeSet?: (value: V, oldValue: V, target: T) => V
@@ -8,6 +16,7 @@ type ObserverOptions<T, V> = {
    * 并且可以通过 `setAttr` `setAttrs`` 更新属性
    */
   konvaSetterGetter?: boolean
+  fireChangeEvent?: boolean
 }
 const toCapCase = (s: string, prefix = '') => prefix + s[0].toUpperCase() + s.slice(1)
 
@@ -22,6 +31,12 @@ const invok = (target: any, key: string, args: any[] | any) => {
   }
 }
 
+const _fireChangeEvent = (target: Konva.Node, key: string, eventData: any) => {
+  if (target instanceof Konva.Node) {
+    target.fire(`${key}Change`, eventData)
+  }
+}
+
 export type GetterName<T extends string> = `get${Capitalize<T>}`
 export type SetterName<T extends string> = `set${Capitalize<T>}`
 
@@ -33,13 +48,28 @@ type KonvaGetterSetter<T extends string, V> = {
 
 type WithKonvaGetterSetter<T, K extends string, V> = T & KonvaGetterSetter<K, V>
 
+type ObserverDecorator<R extends Konva.Node, S extends string & keyof R> = (
+  target: R,
+  key: S,
+) => asserts target is WithKonvaGetterSetter<R, S, R[S]>
+
 /**
  * Konva style set/get observer decorator
  */
-export const observer = function <T extends Konva.Node, P extends string & keyof T>(
+export function observer<T extends Konva.Node, P extends string & keyof T>(
+  target: T,
+  propertyKey: P,
   options?: ObserverOptions<T, T[P]>,
-) {
-  const { beforeSet = id, afterSet, konvaSetterGetter = true } = options || {}
+): ObserverDecorator<T, P>
+export function observer<T extends Konva.Node, P extends string & keyof T>(
+  options?: ObserverOptions<T, T[P]>,
+): ObserverDecorator<T, P>
+export function observer<T extends Konva.Node, P extends string & keyof T>(
+  target?: T,
+  propertyKey?: P,
+  options?: ObserverOptions<T, T[P]>,
+): ObserverDecorator<T, P> {
+  const { beforeSet = id, afterSet, konvaSetterGetter = true, fireChangeEvent } = options || {}
 
   // decorator
   return function <R extends T = T, S extends string & keyof T = P>(
@@ -62,16 +92,23 @@ export const observer = function <T extends Konva.Node, P extends string & keyof
           // config callback
           // lifecycle callback
           const newVal = beforeSet.call(this, nextValue, oldVal, this)
-          invok(this, 'propWillUpdate', { key, oldVal, newVal })
+          const changedProp = { key, oldVal, newVal }
+          invok(this, 'propWillUpdate', changedProp)
 
           value = nextValue
-          invok(this, '__didUpdate', { key, oldVal, newVal })
+          invok(this, '__didUpdate', changedProp)
 
-          invok(this, 'propDidUpdate', { key, oldVal, newVal })
+          invok(this, 'propDidUpdate', changedProp)
           afterSet?.call(this, oldVal, newVal, this)
+          fireChangeEvent && _fireChangeEvent(this, key, changedProp)
         } else {
           value = nextValue
         }
+
+        // attrs map
+        const attrs = Reflect.get(this, 'attrs') ?? {}
+        Reflect.set(this, 'attrs', attrs)
+        attrs[key] = value
 
         dirty = true
       },
