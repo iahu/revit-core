@@ -36,6 +36,7 @@ const layers: InitStore['layers'] = [
         id: 'ent-4',
         x: 50,
         y: 50,
+        openDirection: 'left',
         type: 'door' as const,
       },
       // {

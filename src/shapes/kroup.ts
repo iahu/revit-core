@@ -14,8 +14,12 @@ export interface KroupOptions extends ContainerConfig {
 }
 
 /**
- * Konva.Group 的封装，生命周期 render -> propWillUpdate ->
- * 如果有响应式参数请用 @observer() 装饰器添加
+ * Konva.Group 的封装，生命周期 render -> propWillUpdate -> update
+ *
+ * 如果有响应式参数请用 @observer() 装饰器添加。
+ *
+ * 如果有精确控制更新的需要可以在 `propWillUpdate(changedProp: ChangedProp)`
+ * 回调中通过判断 `changedProp.key` 来实现
  */
 export default class Kroup extends Konva.Group implements Observed {
   @observer<Kroup, 'stroke'>() stroke = '#333'
@@ -34,6 +38,7 @@ export default class Kroup extends Konva.Group implements Observed {
 
   /**
    * 工具方法：批量复制 config 到当前对象
+   * 通常用 this.setAttrs 方法就可以了
    */
   assignArgs<T, K extends keyof T>(config: T, keys: K[]) {
     keys.forEach(key => {

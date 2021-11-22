@@ -1,10 +1,9 @@
-import { HIGHLIGHT_CLASSNAME } from '@actions/select'
+import { HIGHLIGHT_CLASSNAME, SELECTED_CLASSNAME } from '@actions/select'
 import Konva from 'konva'
 import { ContainerConfig } from 'konva/lib/Container'
-import { KonvaEventObject } from 'konva/lib/Node'
 import { DEG_TO_RAD } from './helper'
 import Kroup from './kroup'
-import { ChangedProp, KonvaChangeEvent, Observed, observer } from './observer'
+import { Observed, observer } from './observer'
 
 export interface DoorOptions {
   stroke?: string | CanvasGradient
@@ -52,7 +51,7 @@ export class Door extends Kroup implements Observed, DoorOptions {
   }
 
   private handleNameChange = () => {
-    if (this.hasName(HIGHLIGHT_CLASSNAME)) {
+    if (this.hasName(HIGHLIGHT_CLASSNAME) || this.hasName(SELECTED_CLASSNAME)) {
       this.$wall.setAttrs({ stroke: this.stroke, fill: '' })
     } else {
       this.$wall.setAttrs({ stroke: this.wallFill, fill: this.wallFill })

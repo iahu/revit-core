@@ -33,6 +33,7 @@ export const isString = isType<string>('String')
 export const isNull = isType<null>('Null')
 
 export const notNull = <T>(v: T): v is NonNullable<T> => v !== null
+export const notUndefined = <T>(v: T): v is NonNullable<T> => v !== undefined
 
 export type GetMultiType<T extends string> = T extends `${infer A} ${infer B}`
   ? GetMultiType<A> | GetMultiType<B>
@@ -60,7 +61,7 @@ export const onceOn = <T extends string>(target: Konva.Node, type: T, lisenter: 
 
 type Unsubscribe = <T>(arg?: T) => T | undefined
 export const listenOn = <T extends string>(
-  target: Konva.Stage | Konva.Layer,
+  target: Konva.Node,
   type: T,
   lisenter: (event: GetMultiType<T>) => void,
 ): Unsubscribe => {
@@ -121,3 +122,6 @@ export const handleOff =
   (handler: (e: GetMultiType<T>) => void) => {
     container.off(type, handler)
   }
+
+export const draggable = <T extends Konva.Node>(t: T) =>
+  t.draggable() ? Promise.resolve(t) : Promise.reject(new Error('not draggable'))

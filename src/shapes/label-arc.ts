@@ -58,7 +58,7 @@ export class LabelArc extends Kroup implements Observed, LabelArcOptions {
       let offsetY = -4 - innerRadius
       // 起始向量之合力向量的角度，即起始线段夹角的一半角度
       const joinAngle = startRotation + deg360 / 2
-      // 合力向量的切度
+      // 合力向量的切线角度
       let tangentAngle = joinAngle - 90
       const labelHeight = this.$label.height()
 
