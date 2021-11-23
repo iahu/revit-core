@@ -150,6 +150,8 @@ export default class Kad {
     return this.stageLayer.findOne(`#${id}`)
   }
 
+  ready = Promise.resolve(false)
+
   private renderToKonva() {
     const { stageLayer, layers } = this
 
@@ -164,6 +166,8 @@ export default class Kad {
         stageLayer.add(this.createShape(entity))
       })
     }
+
+    this.ready = Promise.resolve(true)
   }
 
   destroy() {

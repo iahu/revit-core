@@ -85,7 +85,15 @@ export class Door extends Kroup implements Observed, DoorOptions {
       height: panelThickness,
       rotation: scaleX * openAngle,
     })
-    this.$sector.setAttrs({ x, scaleX, stroke, strokeWidth, angle: openAngle })
+    this.$sector.setAttrs({
+      x,
+      scaleX,
+      innerRadius: panelWidth,
+      outerRadius: panelWidth,
+      stroke,
+      strokeWidth,
+      angle: openAngle,
+    })
 
     this.$background.setAttrs({
       stroke: '',

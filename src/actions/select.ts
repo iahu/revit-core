@@ -1,5 +1,6 @@
 import Konva from 'konva'
 import { Layer } from 'konva/lib/Layer'
+import { Shape } from 'konva/lib/Shape'
 import { Stage } from 'konva/lib/Stage'
 import { dragSelect } from './drag-select'
 import { listenOn, logger, notUndefined, onceOn } from './helper'
@@ -71,5 +72,6 @@ export const select = (layer: Layer) => {
       } else {
         console.log(e.toString())
       }
+      return Promise.resolve([])
     })
 }

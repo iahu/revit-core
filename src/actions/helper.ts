@@ -41,7 +41,7 @@ export type GetMultiType<T extends string> = T extends `${infer A} ${infer B}`
   ? GetMultiType<C>
   : T extends keyof DocumentEventMap
   ? KonvaEventObject<DocumentEventMap[T]>
-  : T extends 'tap'
+  : T extends 'tap' | 'touchstart' | 'touchmove' | 'touchcancel' | 'touchend'
   ? KonvaEventObject<TouchEvent>
   : KonvaEventObject<Event>
 
@@ -124,4 +124,4 @@ export const handleOff =
   }
 
 export const draggable = <T extends Konva.Node>(t: T) =>
-  t.draggable() ? Promise.resolve(t) : Promise.reject(new Error('not draggable'))
+  t.draggable() ? Promise.reject(new Error('draggable')) : Promise.resolve(t)

@@ -1,6 +1,7 @@
 import Kad, { Actions } from '.'
 import { InitStore } from './data/store'
 import logo from './assets/logo.png'
+import Konva from 'konva'
 
 const layers: InitStore['layers'] = [
   {
@@ -27,7 +28,7 @@ const layers: InitStore['layers'] = [
       },
       {
         id: 'ent-3',
-        x: 100,
+        x: 500,
         y: 100,
         type: 'text' as const,
         text: 'revit editor',
@@ -36,8 +37,10 @@ const layers: InitStore['layers'] = [
         id: 'ent-4',
         x: 50,
         y: 50,
+        panelWidth: 100,
         openDirection: 'left',
         type: 'door' as const,
+        // rotation: 90,
       },
       // {
       //   id: 'ent-5',
@@ -52,11 +55,10 @@ const layers: InitStore['layers'] = [
   },
 ]
 
-const core = new Kad(document.getElementById('app') as HTMLDivElement, { layers })
+const kad = new Kad(document.getElementById('app') as HTMLDivElement, { layers })
 
 const $action = document.querySelector('.action-bar') as HTMLButtonElement
-
 $action.addEventListener('click', e => {
   const action = (e.target as HTMLElement).dataset.action
-  core.execute(action as Actions)
+  kad.execute(action as Actions)
 })

@@ -2,11 +2,11 @@ import { applyMove } from '@api/move'
 import Assistor from '@shapes/assistor'
 import Konva from 'konva'
 import { Stage } from 'konva/lib/Stage'
-import { pick } from './pick'
-import { input } from './input'
+import { select } from './select'
 import { getBackgroundLayer } from '../helpers/background'
 import { getTransformer } from '../helpers/transfomer'
 import { listenOn, stopImmediatePropagation, useEventTarget, usePoinerPosition, vector2Point } from './helper'
+import { input } from './input'
 
 type MoveConfig = {
   snapAngle?: number
@@ -21,7 +21,8 @@ export const move = async (layer: Konva.Layer, config = {} as MoveConfig) => {
   let nodes = transformer.nodes()
 
   if (!nodes.length) {
-    nodes = [await pick(layer)]
+    nodes = await select(layer)
+    stage.fire('beforeMove', { nodes })
   }
 
   // get start point
@@ -31,7 +32,6 @@ export const move = async (layer: Konva.Layer, config = {} as MoveConfig) => {
     .then(usePoinerPosition)
   if (!transformer.nodes().length) {
     transformer.nodes(nodes)
-    transformer.setAttr('stroke', '#0099ff')
   }
 
   // setup assistor
@@ -59,6 +59,7 @@ export const move = async (layer: Konva.Layer, config = {} as MoveConfig) => {
     height: transformer.getHeight() + padding * 2,
     visible: true,
   })
+  pupperty.listening(false)
   bgLayer.add(pupperty)
 
   // listen on mouse move
@@ -78,14 +79,16 @@ export const move = async (layer: Konva.Layer, config = {} as MoveConfig) => {
   await input(stage, 'click').then(stopImmediatePropagation).then(stopListenMousemove)
 
   // apply move action
-  applyMove(nodes, {
+  const dest = {
     x: assistor.endPoint[0] - startPoint.x,
     y: assistor.endPoint[1] - startPoint.y,
-  })
+  }
+  applyMove(nodes, dest)
 
   // and then clearup
   assistor.destroy()
   pupperty.destroy()
   bgLayer.removeName('unselectable')
-  transformer.setAttr('stroke', '')
+
+  return dest
 }

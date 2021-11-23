@@ -119,13 +119,13 @@ export function observer<T extends Konva.Node, P extends string & keyof T>(
 
     if (konvaSetterGetter) {
       // Konva style setter getter
-      Reflect.defineProperty(target, toCapCase(key, 'set'), {
+      Object.defineProperty(target, toCapCase(key, 'set'), {
         value(value: P) {
           Reflect.set(this, key, value)
           return this
         },
       })
-      Reflect.defineProperty(target, toCapCase(key, 'get'), {
+      Object.defineProperty(target, toCapCase(key, 'get'), {
         value() {
           return Reflect.get(this, key)
         },

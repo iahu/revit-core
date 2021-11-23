@@ -3,62 +3,29 @@ import { pick } from './pick'
 import { listenOn } from './helper'
 import Konva from 'konva'
 import { move } from './move'
+import { Stage } from 'konva/lib/Stage'
+import { getTransformer } from '@helpers/transfomer'
+import { Shadow } from 'fabric/fabric-impl'
+import { getDraftLayer } from '@helpers/draft'
+import { Shape } from 'konva/lib/Shape'
 
 export const copy = async (layer: Layer, args: any) => {
-  console.log('args', args)
-  const stage = layer.getStage()
-  const pointerX = new Konva.Path({
-    id: 'pointerX',
-    data: 'M-5 -5 L5 5 M-5 5 L5 -5',
-    stroke: 'red'
+  const stage = layer.getStage() as Stage
+  const transformer = getTransformer(stage)
+  let x, y
+  const stopLinten = listenOn(stage, 'beforeMove', (e: any) => {
+    x = e.nodes[0].x()
+    y = e.nodes[0].y()
   })
-  const pointerBox = new Konva.Path({
-    id: 'pointerBox',
-    data: 'M-5 -5 h10 v10 h-10 v-10',
-    stroke: 'red'
-  })
-  layer.add(pointerX)
-  layer.add(pointerBox)
-  pointerX.visible(false)
-  pointerBox.visible(false)
-
-  // const t1 = await pick(layer)
-  // t1.opacity(1)
-  // t1.name('unselectable')
-
   await move(layer)
-  // console.log('stage', stage)
-  const reivtCanvas = document.querySelector('#revit-canvas') as HTMLElement
-  const cx = reivtCanvas.getBoundingClientRect().left
-  const cy = reivtCanvas.getBoundingClientRect().top
-  // const canvas = 
-  // const stopSelectPointer = listenOn(stage, 'mousemove', e => {
-  //   pointerBox.visible(false)
-  //   pointerX.visible(false)
-  //   if (e.target != t1) {
-  //     const tx = e.evt.clientX - cx
-  //     const ty = e.evt.clientY - cy
-  //     const data = layer.canvas.getContext().getImageData(tx, ty, 1, 1).data
+  stopLinten()
 
-  //     if (data[0] != 255 || data[1] != 255 || data[2] != 255) {//不是白色
-  //       console.log('white')
-  //       setTimeout(() => {
-  //         pointerX.x(tx)
-  //         pointerX.y(ty)
-  //         pointerX.visible(true)
-  //         pointerBox.visible(false)
-  //       }, 1)
-  //     }
-  //   }
-  // })
-
-  // console.log('t1', t1)
-  return () => {
-    // stopSelectPointer()
-    // stopMousedown()
-    // stopMousemove()
-    // stopMouseup()
-    // stopClick()
-  }
+  const draftLayer = getDraftLayer(stage)
+  const shape = transformer.nodes()[0].clone()
+  shape.x(x)
+  shape.y(y)
+  transformer.setAttrs({ borderStroke: '' })
+  draftLayer.add(shape)
+  draftLayer.visible(true)
 }
 
