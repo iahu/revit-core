@@ -41,6 +41,15 @@ const layers: InitStore['layers'] = [
         type: 'door' as const,
         // rotation: 90,
       },
+      {
+        id: 'ent-5',
+        x: 90,
+        y: 120,
+        // panelWidth: 100,
+        openDirection: 'left',
+        type: 'door' as const,
+        rotation: 90,
+      },
       // {
       //   id: 'ent-5',
       //   x: 30,

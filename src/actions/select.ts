@@ -44,18 +44,13 @@ export const setHightlight = (nodes: (Konva.Shape | Konva.Group)[]) => {
     // set node className to `highlight`
     node.addName(HIGHLIGHT_CLASSNAME)
 
-    const id = node._id
+    const id = node.id()
     const isClone = (n: Konva.Node) => n.getAttr('cloneId') === id
     let clone = layer.find(`.${HIGHLIGHT_CLONE_NODE_CLASSNAME}`).find(isClone) as Shape
     if (!clone) {
       clone = node.clone(getCloneAttrs(node))
-
-      // 不响应事件
       clone.listening(false)
-      // add clone to layer
-
       layer.add(clone)
-      clone.zIndex(4)
     }
 
     const stopDragmove = listenOn(node, 'dragmove', () => {

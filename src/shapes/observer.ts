@@ -76,7 +76,6 @@ export function observer<T extends Konva.Node, P extends string & keyof T>(
     target: R,
     key: S,
   ): asserts target is WithKonvaGetterSetter<R, S, R[S]> {
-    let value: T[P] | undefined
     let dirty = false
 
     Object.defineProperty(target, key, {
@@ -84,6 +83,7 @@ export function observer<T extends Konva.Node, P extends string & keyof T>(
       enumerable: true,
       // writable: true,
       set(nextValue: T[P]) {
+        let value = Reflect.get(this.attrs, key)
         if (nextValue === value) return
 
         const oldVal = Reflect.get(this, key)
@@ -113,24 +113,24 @@ export function observer<T extends Konva.Node, P extends string & keyof T>(
         dirty = true
       },
       get() {
-        return value
+        return this.attrs?.[key]
       },
     })
 
-    if (konvaSetterGetter) {
-      // Konva style setter getter
-      Object.defineProperty(target, toCapCase(key, 'set'), {
-        value(value: P) {
-          Reflect.set(this, key, value)
-          return this
-        },
-      })
-      Object.defineProperty(target, toCapCase(key, 'get'), {
-        value() {
-          return Reflect.get(this, key)
-        },
-      })
-    }
+    // if (konvaSetterGetter) {
+    //   // Konva style setter getter
+    //   Object.defineProperty(target, toCapCase(key, 'set'), {
+    //     value(value: P) {
+    //       Reflect.set(this, key, value)
+    //       return this
+    //     },
+    //   })
+    //   Object.defineProperty(target, toCapCase(key, 'get'), {
+    //     value() {
+    //       return Reflect.get(this, key)
+    //     },
+    //   })
+    // }
   }
 }
 
