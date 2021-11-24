@@ -1,7 +1,6 @@
 import Kad, { Actions } from '.'
-import { InitStore } from './data/store'
 import logo from './assets/logo.png'
-import Konva from 'konva'
+import { InitStore } from './data/store'
 
 const layers: InitStore['layers'] = [
   {
@@ -37,7 +36,7 @@ const layers: InitStore['layers'] = [
         id: 'ent-4',
         x: 50,
         y: 50,
-        panelWidth: 100,
+        // panelWidth: 100,
         openDirection: 'left',
         type: 'door' as const,
         // rotation: 90,

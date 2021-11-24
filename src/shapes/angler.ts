@@ -27,6 +27,10 @@ export class Angler extends Kroup implements Observed, AnglerOptions {
   readonly endAux = new AuxLine({ name: 'angler-end-line' })
   readonly labelArc = new LabelArc({ name: 'angler-label' })
 
+  get angle() {
+    return this.labelArc.$arc.angle()
+  }
+
   update() {
     const { stroke, strokeWidth, centerPoint, startPoint, endPoint } = this
 

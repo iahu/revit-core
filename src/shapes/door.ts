@@ -68,7 +68,7 @@ export class Door extends Kroup implements Observed, DoorOptions {
     }
 
     this.$wall.setAttrs({
-      offsetY: wallThickness,
+      // offsetY: wallThickness,
       stroke: wallFill,
       strokeWidth,
       width: panelWidth,
@@ -77,6 +77,7 @@ export class Door extends Kroup implements Observed, DoorOptions {
     })
     this.$panel.setAttrs({
       x,
+      y: wallThickness,
       scaleX,
       offsetY: panelThickness,
       stroke,
@@ -87,6 +88,7 @@ export class Door extends Kroup implements Observed, DoorOptions {
     })
     this.$sector.setAttrs({
       x,
+      y: wallThickness,
       scaleX,
       innerRadius: panelWidth,
       outerRadius: panelWidth,
@@ -100,7 +102,6 @@ export class Door extends Kroup implements Observed, DoorOptions {
       strokeWidth,
       opacity: 0,
       x: 0,
-      y: -wallThickness,
       width: panelWidth,
       height: panelWidth + wallThickness,
       hitFunc(ctx: Konva.Context) {

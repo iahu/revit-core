@@ -1,15 +1,17 @@
+import { Group } from 'konva/lib/Group'
 import { Layer } from 'konva/lib/Layer'
 import { Shape } from 'konva/lib/Shape'
-import { isSelectable, isShape, listenOn } from './helper'
+import { closestSelectable, isShape, listenOn } from './helper'
 
 export const pick = (container: Layer) => {
-  return new Promise<Shape>(resolve => {
-    const stop = listenOn(container, 'click', event => {
+  return new Promise<Shape | Group>(resolve => {
+    const stop = listenOn(container, 'mousedown', event => {
       event.evt.preventDefault()
       const { target } = event
+      const closestTarget = isShape(target) ? closestSelectable(target) : null
 
-      if (isShape(target) && isSelectable(target)) {
-        resolve(target)
+      if (closestTarget) {
+        resolve(closestTarget)
         stop()
       }
     })

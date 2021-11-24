@@ -59,7 +59,7 @@ export const onceOn = <T extends string>(target: Konva.Node, type: T, lisenter: 
   return target.on(typeWithNS, handler)
 }
 
-type Unsubscribe = <T>(arg?: T) => T | undefined
+type Unsubscribe = <T>(arg?: T) => T
 export const listenOn = <T extends string>(
   target: Konva.Node,
   type: T,
@@ -69,13 +69,14 @@ export const listenOn = <T extends string>(
 
   target.on(typeWithNS, lisenter)
 
-  return <T>(arg?: T) => {
+  return <T>(arg?: T | undefined) => {
     target.off(typeWithNS, lisenter)
-    return arg
+    return arg as T
   }
 }
 
-export type SelectableNodes = Shape | Stage | Group | Container
+export type SelectableNodes = Konva.Node
+// Shape | Stage | Group | Container
 
 export const isUnselectable = (target: SelectableNodes) => {
   return (
@@ -123,5 +124,14 @@ export const handleOff =
     container.off(type, handler)
   }
 
-export const draggable = <T extends Konva.Node>(t: T) =>
-  t.draggable() ? Promise.reject(new Error('draggable')) : Promise.resolve(t)
+export const notDraggable = <T extends Konva.Node>(t: T) => {
+  return t.draggable() ? Promise.reject(new Error('draggable')) : Promise.resolve(t)
+}
+
+export const closestSelectable = <T extends Konva.Node>(target: T): T | Group | null => {
+  return isSelectable(target)
+    ? target
+    : target.parent instanceof Group && isSelectable(target.parent as Container)
+    ? target.parent
+    : null
+}

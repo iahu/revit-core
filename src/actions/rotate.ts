@@ -38,10 +38,10 @@ export const rotate = async (layer: Layer) => {
   // ready to action
 
   // apply action
-  applyRotate(node, angler.labelArc.$arc.angle())
+  const { angle } = angler
+  applyRotate(node, angle)
   // clearup
   angler.destroy()
 
-  // return action clearup callback
-  return () => {}
+  return  { node, angle }
 }

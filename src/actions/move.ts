@@ -90,5 +90,5 @@ export const move = async (layer: Konva.Layer, config = {} as MoveConfig) => {
   pupperty.destroy()
   bgLayer.removeName('unselectable')
 
-  return dest
+  return { ...dest, nodes }
 }
