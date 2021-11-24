@@ -8,7 +8,7 @@
     "serve": "vite preview",
     "watch": "yarn build:esm --watch",
     "test": "tsc --noEmit -p tsconfig.json",
-    "lint": "eslint --fix --config .eslintrc.yml",
+    "lint": "eslint --fix --config .eslintrc.json",
     "precommit": "echo 'precommit' && lint-staged"
   },
   "lint-staged": {
