@@ -1,4 +1,4 @@
-import { HIGHLIGHT_CLASSNAME, SELECTED_CLASSNAME } from '@actions/select'
+import { HIGHLIGHT_CLASSNAME, SELECTED_CLASSNAME } from '@actions/helper'
 import Konva from 'konva'
 import { ContainerConfig } from 'konva/lib/Container'
 import { DEG_TO_RAD } from './helper'
@@ -7,8 +7,11 @@ import { Observed, observer } from './observer'
 
 export interface DoorOptions {
   stroke?: string | CanvasGradient
+  strokeWidth?: number
   panelWidth?: number
   panelThickness?: number
+  panelStrokeWidth?: number
+  panelFill?: string
   wallThickness?: number
   wallFill?: string
   /**
@@ -22,16 +25,16 @@ export interface DoorOptions {
 }
 
 export class Door extends Kroup implements Observed, DoorOptions {
-  // @observer<Door, 'stroke'>() stroke = '#0099ff'
-  // @observer<Door, 'strokeWidth'>() strokeWidth = 1
   @observer<Door, 'panelWidth'>() panelWidth = 40
+  @observer<Door, 'panelStrokeWidth'>() panelStrokeWidth = 1
   @observer<Door, 'panelThickness'>() panelThickness = 2
+  @observer<Door, 'panelFill'>() panelFill = ''
   @observer<Door, 'wallThickness'>() wallThickness = 8
   @observer<Door, 'wallFill'>() wallFill = 'white'
   @observer<Door, 'openDirection'>() openDirection: DoorOptions['openDirection'] = 'right'
   @observer<Door, 'openAngle'>() openAngle = 90
 
-  $background = new Konva.Rect({ name: 'door-background unselectable' })
+  $cover = new Konva.Rect({ name: 'door-background unselectable' })
   $wall = new Konva.Rect({ name: 'door-wall', stroke: this.stroke, strokeWidth: this.strokeWidth })
   $panel = new Konva.Rect({ name: 'door-panel', stroke: this.stroke, strokeWidth: this.strokeWidth })
   $sector = new Konva.Arc({
@@ -59,16 +62,25 @@ export class Door extends Kroup implements Observed, DoorOptions {
   }
 
   update() {
-    const { stroke, strokeWidth, wallThickness, panelWidth, panelThickness, openDirection, openAngle, wallFill } = this
+    const {
+      stroke,
+      strokeWidth,
+      wallThickness,
+      panelWidth,
+      panelFill,
+      panelThickness,
+      panelStrokeWidth,
+      openDirection,
+      openAngle,
+      wallFill,
+    } = this
     let x = 0
     let scaleX = 1
     if (openDirection === 'left') {
       x = panelWidth
       scaleX = -1
     }
-
     this.$wall.setAttrs({
-      // offsetY: wallThickness,
       stroke: wallFill,
       strokeWidth,
       width: panelWidth,
@@ -79,11 +91,13 @@ export class Door extends Kroup implements Observed, DoorOptions {
       x,
       y: wallThickness,
       scaleX,
-      offsetY: panelThickness,
+      offsetX: -panelStrokeWidth / 2,
+      offsetY: panelThickness + (5 / 2) * panelStrokeWidth,
       stroke,
-      strokeWidth,
+      fill: panelFill,
+      strokeWidth: panelStrokeWidth,
       width: panelWidth,
-      height: panelThickness,
+      height: panelThickness + 2 * panelStrokeWidth,
       rotation: scaleX * openAngle,
     })
     this.$sector.setAttrs({
@@ -97,13 +111,10 @@ export class Door extends Kroup implements Observed, DoorOptions {
       angle: openAngle,
     })
 
-    this.$background.setAttrs({
-      stroke: '',
+    this.$cover.setAttrs({
       strokeWidth,
-      opacity: 0,
-      x: 0,
       width: panelWidth,
-      height: panelWidth + wallThickness,
+      height: this.$sector.getSelfRect().height + wallThickness,
       hitFunc(ctx: Konva.Context) {
         ctx.beginPath()
         // wall rect
@@ -116,7 +127,7 @@ export class Door extends Kroup implements Observed, DoorOptions {
           ctx.arc(0, wallThickness, panelWidth, 0, openAngle * DEG_TO_RAD, false)
         } else {
           ctx.moveTo(panelWidth, wallThickness)
-          ctx.arc(panelWidth, wallThickness, panelWidth, 180 * DEG_TO_RAD, openAngle * DEG_TO_RAD, true)
+          ctx.arc(panelWidth, wallThickness, panelWidth, 180 * DEG_TO_RAD, (180 - openAngle) * DEG_TO_RAD, true)
         }
 
         ctx.closePath()
@@ -135,6 +146,6 @@ export class Door extends Kroup implements Observed, DoorOptions {
 
     this.update()
 
-    return [this.$background, this.$wall, this.$panel, this.$sector]
+    return [this.$wall, this.$panel, this.$sector, this.$cover]
   }
 }

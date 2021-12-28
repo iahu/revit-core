@@ -19,7 +19,7 @@ export const getTransformer = (stage: Konva.Stage) => {
     draggable: true,
     useSingleNodeRotation: false,
     // borderStroke: '',
-    // visible: false,
+    visible: false,
   })
 
   stageLayer.add(transformer)

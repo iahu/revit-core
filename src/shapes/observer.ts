@@ -11,11 +11,6 @@ export interface KonvaChangeEvent<T extends Konva.Node, K extends string & keyof
 type ObserverOptions<T, V> = {
   beforeSet?: (value: V, oldValue: V, target: T) => V
   afterSet?: (oldValue: V | undefined, newValue: V, target: T) => void
-  /**
-   * 开始后，会添加 `set{Key}` `get{Key}` 方法，
-   * 并且可以通过 `setAttr` `setAttrs`` 更新属性
-   */
-  konvaSetterGetter?: boolean
   fireChangeEvent?: boolean
 }
 const toCapCase = (s: string, prefix = '') => prefix + s[0].toUpperCase() + s.slice(1)
@@ -24,7 +19,7 @@ export type Getter<T extends Record<string, any>, K extends keyof T> = () => T[K
 export type Setter<T extends Record<string, any>, K extends keyof T> = (value: T[K]) => void
 const id = <T>(v: T) => v
 
-const invok = (target: any, key: string, args: any[] | any) => {
+export const invok = (target: any, key: string, args: any[] | any) => {
   const method = Reflect.get(target, key)
   if (typeof method === 'function') {
     return Reflect.apply(method, target, Array.isArray(args) ? args : [args])
@@ -69,69 +64,69 @@ export function observer<T extends Konva.Node, P extends string & keyof T>(
   propertyKey?: P,
   options?: ObserverOptions<T, T[P]>,
 ): ObserverDecorator<T, P> {
-  const { beforeSet = id, afterSet, konvaSetterGetter = true, fireChangeEvent } = options || {}
-
   // decorator
-  return function <R extends T = T, S extends string & keyof T = P>(
-    target: R,
-    key: S,
-  ): asserts target is WithKonvaGetterSetter<R, S, R[S]> {
-    let dirty = false
+  return function (target: T, key: P) {
+    const { beforeSet = id, afterSet, fireChangeEvent } = options ?? {}
 
     Object.defineProperty(target, key, {
       configurable: true,
       enumerable: true,
       // writable: true,
       set(nextValue: T[P]) {
-        let value = Reflect.get(this.attrs, key)
-        if (nextValue === value) return
-
         const oldVal = Reflect.get(this, key)
+        if (Object.is(nextValue, oldVal)) return
+        // attrs map
+        const _attrs = Reflect.get(this, 'attrs')
+        const attrs = _attrs ?? ({} as Record<string, unknown>)
+        if (!_attrs) {
+          Reflect.set(this, 'attrs', attrs)
+        }
 
-        if (dirty) {
+        const hasRendered = Reflect.get(this, '__hasRendered')
+        if (Reflect.has(attrs, key) || hasRendered) {
           // config callback
           // lifecycle callback
           const newVal = beforeSet.call(this, nextValue, oldVal, this)
           const changedProp = { key, oldVal, newVal }
-          invok(this, 'propWillUpdate', changedProp)
-
-          value = nextValue
+          if (hasRendered) {
+            invok(this, 'propWillUpdate', changedProp)
+          }
+          attrs[key] = nextValue
           invok(this, '__didUpdate', changedProp)
 
-          invok(this, 'propDidUpdate', changedProp)
+          if (hasRendered) {
+            invok(this, 'propDidUpdate', changedProp)
+          }
           afterSet?.call(this, oldVal, newVal, this)
           fireChangeEvent && _fireChangeEvent(this, key, changedProp)
         } else {
-          value = nextValue
+          attrs[key] = nextValue
         }
-
-        // attrs map
-        const attrs = Reflect.get(this, 'attrs') ?? {}
-        Reflect.set(this, 'attrs', attrs)
-        attrs[key] = value
-
-        dirty = true
       },
       get() {
         return this.attrs?.[key]
       },
     })
 
-    // if (konvaSetterGetter) {
-    //   // Konva style setter getter
-    //   Object.defineProperty(target, toCapCase(key, 'set'), {
-    //     value(value: P) {
-    //       Reflect.set(this, key, value)
-    //       return this
-    //     },
-    //   })
-    //   Object.defineProperty(target, toCapCase(key, 'get'), {
-    //     value() {
-    //       return Reflect.get(this, key)
-    //     },
-    //   })
-    // }
+    useGetterSetter(target, key)
   }
+}
+
+export const useGetterSetter = <T, K extends string & keyof T>(target: T, key: K) => {
+  // Konva style setter getter
+  Object.defineProperty(target, toCapCase(key, 'set'), {
+    value(value: K) {
+      if (value !== Reflect.get(this, key)) {
+        Reflect.set(this, key, value)
+      }
+      return this
+    },
+  })
+  Object.defineProperty(target, toCapCase(key, 'get'), {
+    value() {
+      return Reflect.get(this, key)
+    },
+  })
 }
 
 /**
@@ -139,7 +134,7 @@ export function observer<T extends Konva.Node, P extends string & keyof T>(
  */
 export const observe = observer()
 
-export type ChangedProp = { key: string; oldVal: any; newVal: any }
+export type ChangedProp<T = any, K extends string = string> = { key: K; oldVal: T; newVal: T }
 export type PropChangeCallback = (prop: ChangedProp) => void
 
 export interface Observed {

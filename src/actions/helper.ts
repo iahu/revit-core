@@ -1,3 +1,5 @@
+import Kroup from '@shapes/kroup'
+import Bluebird from 'bluebird'
 import Konva from 'konva'
 import { Container } from 'konva/lib/Container'
 import { Group } from 'konva/lib/Group'
@@ -7,11 +9,18 @@ import { Shape } from 'konva/lib/Shape'
 import { Stage } from 'konva/lib/Stage'
 import { Vector2d } from 'konva/lib/types'
 
+export const HIGHLIGHT_COLOR = '#0066CC'
+export const HIGHLIGHT_FILL = '#99BBFF'
+export const SELECTED_CLASSNAME = 'selected'
+export const HIGHLIGHT_CLASSNAME = 'highlight'
+export const HIGHLIGHT_DISABLE = 'highlight-disable' //禁止高亮
+export const HIGHLIGHT_CLONE_NODE_CLASSNAME = 'highlight-clone-node'
+
 type FunctionWithCallback = (...args: any[]) => any
 
 export const bindCallback = <T extends FunctionWithCallback>(fn: T) => {
   return (...args: any[]) =>
-    new Promise((resolve, reject) => {
+    new Promise(resolve => {
       fn(...args, (...result: any[]) => {
         resolve(result)
       })
@@ -19,7 +28,9 @@ export const bindCallback = <T extends FunctionWithCallback>(fn: T) => {
 }
 
 export const isShape = (target: Konva.Node): target is Konva.Shape => target instanceof Konva.Shape
+export const isKroup = (target: Konva.Node): target is Kroup => target instanceof Kroup
 export const isStage = (target: Konva.Node): target is Konva.Stage => target instanceof Konva.Stage
+export const isLayer = (target: Konva.Node): target is Konva.Layer => target instanceof Konva.Layer
 export const isTextShape = (shape: Konva.Shape): shape is Konva.Text => shape instanceof Konva.Text
 export const toTarget = <T>(event: Konva.KonvaEventObject<T>) => event.target
 // export const filter = <T>(fn: (value: T) => boolean, value: T) => (fn(value) ? value : new Error('unexpected'))
@@ -31,6 +42,7 @@ export const isType =
 export const isNumber = isType<number>('Number')
 export const isString = isType<string>('String')
 export const isNull = isType<null>('Null')
+export const isObject = isType<Record<PropertyKey, unknown>>('Object')
 
 export const notNull = <T>(v: T): v is NonNullable<T> => v !== null
 export const notUndefined = <T>(v: T): v is NonNullable<T> => v !== undefined
@@ -44,6 +56,12 @@ export type GetMultiType<T extends string> = T extends `${infer A} ${infer B}`
   : T extends 'tap' | 'touchstart' | 'touchmove' | 'touchcancel' | 'touchend'
   ? KonvaEventObject<TouchEvent>
   : KonvaEventObject<Event>
+
+export const getKonvaEventType = <T extends string>(types: T) =>
+  types
+    .split(' ')
+    .map(t => `${t}Change.konva`)
+    .join(' ')
 
 export const KAD_ACTION_NS = 'kadAction'
 export const withKadActionNS = (s: string) => (s.includes('.') ? s : `${s}.${KAD_ACTION_NS}`)
@@ -78,12 +96,15 @@ export const listenOn = <T extends string>(
 export type SelectableNodes = Konva.Node
 // Shape | Stage | Group | Container
 
-export const isUnselectable = (target: SelectableNodes) => {
-  return (
-    target.hasName('unselectable') ||
-    target.parent?.hasName('unselectable') ||
-    target.getLayer()?.hasName('unselectable')
-  )
+export const isUnselectable = (target: SelectableNodes): boolean => {
+  if (!target.visible() || target.hasName('unselectable')) {
+    return true
+  }
+  const { parent } = target
+  if (parent) {
+    return isUnselectable(parent)
+  }
+  return false
 }
 
 export const isSelectable = (target: SelectableNodes) => !isUnselectable(target)
@@ -131,7 +152,23 @@ export const notDraggable = <T extends Konva.Node>(t: T) => {
 export const closestSelectable = <T extends Konva.Node>(target: T): T | Group | null => {
   return isSelectable(target)
     ? target
-    : target.parent instanceof Group && isSelectable(target.parent as Container)
+    : target.parent instanceof Kroup && isSelectable(target.parent as Container)
     ? target.parent
     : null
+}
+
+export type ShapeOrGroup = Group | Shape
+export type StageOrLayer = Stage | Layer
+export type WithType<T> = T & { type: string }
+export type Maybe<T> = T | undefined | null
+
+export const findSelected = (stageOrLayer: StageOrLayer) => {
+  const selected = stageOrLayer.find(`.${SELECTED_CLASSNAME}`) as ShapeOrGroup[]
+  return selected.length ? selected : undefined
+}
+
+export const delay = (ms: number) => {
+  return new Bluebird(resolve => {
+    setTimeout(resolve, ms)
+  })
 }

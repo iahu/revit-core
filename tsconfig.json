@@ -17,13 +17,20 @@
     "resolveJsonModule": true,
     "esModuleInterop": true,
     "baseUrl": "./src",
+    "incremental": true,
     "paths": {
+      "Bluebird": ["bluebird"],
       "@actions/*": ["./actions/*"],
       "@api/*": ["./api/*"],
       "@shapes/*": ["./shapes/*"],
       "@input/*": ["./input/*"],
       "@helpers/*": ["./helpers/*"]
-    }
+    },
+    "plugins": [
+      {
+        "transform": "@zerollup/ts-transform-paths"
+      }
+    ]
   },
   "include": ["./src", "./vite-env.d.ts"],
   "exclude": ["./src/__action/*", "./src/renderer"]

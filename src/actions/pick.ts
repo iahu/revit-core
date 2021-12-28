@@ -1,17 +1,48 @@
-import { Group } from 'konva/lib/Group'
+import Bluebird from 'bluebird'
 import { Layer } from 'konva/lib/Layer'
-import { Shape } from 'konva/lib/Shape'
-import { closestSelectable, isShape, listenOn } from './helper'
+import { Stage } from 'konva/lib/Stage'
+import { Vector2d } from 'konva/lib/types'
+import { closestSelectable, isKroup, isShape, listenOn, ShapeOrGroup } from './helper'
 
-export const pick = (container: Layer) => {
-  return new Promise<Shape | Group>(resolve => {
-    const stop = listenOn(container, 'mousedown', event => {
+export interface PickOptions {
+  onlySelectable?: boolean
+  ignoreStage?: boolean
+}
+
+export const pick = (container: Layer, options?: PickOptions) => {
+  const { ignoreStage = true, onlySelectable = true } = options ?? {}
+  return new Bluebird<ShapeOrGroup | Stage>((resolve, reject, onCancel) => {
+    const stage = container.getStage()
+    if (!stage) {
+      return reject('no stage')
+    }
+
+    const stop = listenOn(stage, 'click', event => {
       event.evt.preventDefault()
       const { target } = event
-      const closestTarget = isShape(target) ? closestSelectable(target) : null
+      const stageOrShape = ignoreStage ? (isShape(target) || isKroup(target) ? target : null) : target
+      const selectableNode = stageOrShape && onlySelectable ? closestSelectable(stageOrShape) : stageOrShape
+      // const closestTarget = isShape(target) || isKroup(target) ? closestSelectable(target) : null
+      if (selectableNode) {
+        resolve(selectableNode)
+        stop()
+      }
+    })
 
-      if (closestTarget) {
-        resolve(closestTarget)
+    onCancel?.(stop)
+  })
+}
+
+export const pointAt = (container: Layer) => {
+  return new Bluebird<Vector2d>((resolve, reject) => {
+    const stage = container.getStage()
+    if (!stage) {
+      return reject('no stage')
+    }
+    const stop = listenOn(stage, 'click', () => {
+      const pointer = stage?.getPointerPosition()
+      if (pointer) {
+        resolve(pointer)
         stop()
       }
     })

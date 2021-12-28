@@ -1,28 +1,53 @@
-import { KAD_ACTION_NS } from '@actions/helper'
-import { Door } from '@shapes/door'
-import Kroup from '@shapes/kroup'
-import { SvgButton } from '@shapes/svg-button'
+import { KAD_ACTION_NS, SELECTED_CLASSNAME } from '@actions/helper'
+import Bluebird from 'bluebird'
 import Konva from 'konva'
 import * as actions from './actions'
-import { Entity, Layer } from './data/store'
 import { getBackgroundLayer } from './helpers/background'
 import { getDraftLayer } from './helpers/draft'
 import { getSelectionRect } from './helpers/selection-rect'
 import { getTransformer } from './helpers/transfomer'
+import { createShape, Layer } from './shapes'
+import type { ShapeOrGroup } from './actions/helper'
+import { ContainerTypes, query } from '@helpers/query'
+import { Container } from 'konva/lib/Container'
 
-export type Actions = keyof typeof actions
+export type { ShapeOrGroup } from './actions/helper'
+export type { Actions } from './actions'
+
+// cancellable
+Bluebird.config({ cancellation: true })
+
+export type ActionTypes = keyof typeof actions
 
 export interface KadConfig {
   layers?: Layer[]
+  stageConfig?: Konva.ContainerConfig
+}
+
+export interface GlobalOptions {
+  type: string
+  [key: string]: any
 }
 
 export default class Kad {
   static actions = actions
 
+  static isAction(action: ActionTypes): boolean {
+    return Object.keys(actions).includes(action)
+  }
+
+  static createShape = createShape
+
   layers = [] as Layer[]
 
   container: HTMLDivElement
   stage: Konva.Stage
+
+  get selectedNodes(): ShapeOrGroup[] {
+    return this.stage.find(`.${SELECTED_CLASSNAME}`)
+  }
+
+  query = (selector: string, container?: ContainerTypes) => query(container ?? this.stage, selector)
 
   /**
    * 图形都渲染到这一层
@@ -33,17 +58,27 @@ export default class Kad {
    */
   draftLayer: Konva.Layer
 
+  get currentLayer() {
+    const layers = [...this.stage.getLayers()]
+    while (layers.length > 0) {
+      const layer = layers.pop()
+      if (layer?.visible()) {
+        return layer
+      }
+    }
+  }
+
   constructor(container: HTMLDivElement, config: KadConfig) {
-    const { layers = [] } = config
+    const { stageConfig, layers = [] } = config
     this.container = container
     this.layers = layers
     this.stage = this.createStage()
+    this.stage.setAttrs(stageConfig)
     this.stageLayer = getBackgroundLayer(this.stage)
     this.draftLayer = getDraftLayer(this.stage)
 
     this.renderToKonva()
     // 默认命令
-    this.execute('highlight')
     this.execute('select')
   }
 
@@ -93,56 +128,38 @@ export default class Kad {
     })
   }
 
-  execute(action: Actions, args?: any): void {
+  // 全局配置项
+  globalActionOptions = {} as GlobalOptions
+
+  #currentAction: Bluebird<unknown> | undefined
+
+  execute(action: ActionTypes, args?: any) {
     if (Object.prototype.hasOwnProperty.call(actions, action)) {
       // clear action handlers before execute next action
       this.clearBeforeExecute(this.stage)
       this.clearBeforeExecute(this.stageLayer)
-      // excecute
-      console.log('execute', action)
-      actions[action](this.stageLayer, args)
+      this.cancelCurrentAction()
+      // execute
+      this.#currentAction = actions[action](this.stageLayer, args)
+
+      this.#currentAction.catch(console.error).then(() => {
+        this.execute('select', args)
+      })
+      return this.#currentAction
     }
+    return Bluebird.resolve()
   }
 
-  private createShape = (entity: Entity) => {
-    const { type, ...userConfig } = entity
-    const config = {
-      fillAfterStrokeEnabled: true,
-      shadowForStrokeEnabled: false,
-      draggable: true,
-      ...userConfig,
-    }
-
-    let shape: Konva.Shape | Kroup
-    if (type === 'imgUrl') {
-      const image = new Image()
-      image.src = entity.imgUrl
-      shape = new Konva.Image({ image })
-      shape.setAttrs(config)
-    } else if (type === 'svgPath') {
-      shape = new Konva.Path(config)
-    } else if (type === 'text') {
-      shape = new Konva.Text(config)
-    } else if (type === 'line') {
-      shape = new Konva.Line(config)
-    } else if (type === 'rect') {
-      shape = new Konva.Rect(config)
-    } else if (type === 'door') {
-      shape = new Door(config)
-    } else if (type === 'svgButton') {
-      shape = new SvgButton(config)
-    } else {
-      // @todo 具体化
-      shape = new Konva.Shape(config)
-    }
-
-    return shape
+  cancelCurrentAction() {
+    this.#currentAction?.cancel()
   }
 
   private drawLayer(layer: Layer) {
-    const nodes = layer.entities?.map(this.createShape) ?? []
+    const nodes = layer.entities?.map(createShape) ?? []
     nodes.forEach(node => {
-      this.stageLayer.add(node)
+      if (node) {
+        this.stageLayer.add(node)
+      }
     })
   }
 
@@ -163,7 +180,10 @@ export default class Kad {
         //   this.getShapes(entity.id)?.remove()
         // }
         //  add
-        stageLayer.add(this.createShape(entity))
+        const shape = createShape(entity)
+        if (shape) {
+          stageLayer.add(shape)
+        }
       })
     }
 

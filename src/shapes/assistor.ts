@@ -45,6 +45,8 @@ export interface AssistorConfig {
    * 自动捕捉角度左右范围
    */
   snapMaxAngle?: number
+
+  pixelRatio?: number
 }
 
 const mapPoint = (point: number[], oldPoint: number[]) => point.concat(oldPoint.slice(point.length))
@@ -73,9 +75,12 @@ export default class Assistor extends Kroup {
   @observer<Assistor, 'snapAngles'>() snapAngles = [0, 45, 90, 135, 180]
   @observer<Assistor, 'snapMaxAngle'>() snapMaxAngle = 1
 
+  @observer<Assistor, 'showCompass'>() showCompass = true
+
+  @observer<Assistor, 'pixelRatio'>() pixelRatio = 1
+
   constructor(config = {} as AssistorConfig & Konva.ContainerConfig) {
     super(config)
-
     this.setAttrs(config)
   }
 
@@ -100,6 +105,8 @@ export default class Assistor extends Kroup {
       rulerOffset,
       snapAngles,
       snapMaxAngle,
+      showCompass,
+      pixelRatio = 1,
     } = this
 
     this.compass.setAttrs({
@@ -112,11 +119,20 @@ export default class Assistor extends Kroup {
       snapAngles,
       snapMaxAngle,
       crossRadius,
+      visible: showCompass,
     })
 
     this.snaped = this.compass.snaped
     const snapedEndPoint = this.compass.endPoint
-    this.ruler.setAttrs({ startPoint, endPoint: snapedEndPoint, stroke, strokeWidth, crossRadius, rulerOffset })
+    this.ruler.setAttrs({
+      startPoint,
+      endPoint: snapedEndPoint,
+      stroke,
+      strokeWidth,
+      crossRadius,
+      rulerOffset,
+      pixelRatio,
+    })
     if (this.snaped) {
       this.endPoint = snapedEndPoint
     }
@@ -126,10 +142,8 @@ export default class Assistor extends Kroup {
     if (this.children?.length) {
       return null
     }
-
     this.compass = new Compass()
     this.ruler = new Ruler()
-
     return [this.compass, this.ruler]
   }
 }

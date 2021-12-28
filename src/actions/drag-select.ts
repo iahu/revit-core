@@ -1,11 +1,19 @@
 import Konva from 'konva'
 import { Layer } from 'konva/lib/Layer'
-import { closestSelectable, isSelectable, isShape, listenOn, useEventTarget, usePoinerPosition } from './helper'
-import { input } from './input'
+import {
+  closestSelectable,
+  isSelectable,
+  isShape,
+  listenOn,
+  ShapeOrGroup,
+  useEventTarget,
+  usePoinerPosition,
+} from './helper'
+import { mouseInput } from './input'
 
 export const dragSelect = async (layer: Layer) => {
   const stage = layer.getStage()
-  const startPoint = await input(stage, 'mousedown').then(useEventTarget).then(usePoinerPosition)
+  const startPoint = await mouseInput(stage, 'mousedown').then(useEventTarget).then(usePoinerPosition)
 
   const selectionRect = new Konva.Rect({
     ...startPoint,
@@ -27,13 +35,13 @@ export const dragSelect = async (layer: Layer) => {
   })
 
   // cancel if drag move event happens on stage.
-  input(stage, 'dragmove').then(() => {
+  mouseInput(stage, 'dragmove').then(() => {
     stopMove()
     selectionRect.destroy()
     clearTimeout(delayId)
   })
 
-  const mouseupEvent = await input(stage, 'mouseup').then(stopMove)
+  const mouseupEvent = await mouseInput(stage, 'mouseup').then(stopMove)
 
   const shapes = layer.children ?? []
   const clientConfig = { skipShadow: true, skipStroke: true }
@@ -50,7 +58,9 @@ export const dragSelect = async (layer: Layer) => {
     return []
   }
 
-  return shapes
+  const result = shapes
     .filter(isSelectable)
     .filter(shape => Konva.Util.haveIntersection(box, shape.getClientRect(clientConfig)))
+
+  return result as ShapeOrGroup[]
 }

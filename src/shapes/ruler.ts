@@ -1,5 +1,7 @@
 import Konva from 'konva'
+import { ContainerConfig } from 'konva/lib/Container'
 import Cross from './cross'
+import { EditableText } from './editable-text'
 import Kroup from './kroup'
 import { Observed, observer } from './observer'
 
@@ -22,13 +24,24 @@ export interface RulerConfig {
 
   stroke?: string
   strokeWidth?: number
+
+  editable?: boolean
+
+  /**
+   * 手动设置标签文案
+   */
+  label?: string
+  /**
+   * 设置像素比例，默认是 `1:1`
+   */
+  pixelRatio?: number
 }
 
 export default class Ruler extends Kroup implements Observed {
-  ruler: Konva.Line
-  rulerLabel: Konva.Text
-  startCross: Cross
-  endCross: Cross
+  ruler = new Konva.Line({ name: 'ruler' })
+  rulerLabel = new EditableText({ name: 'ruler-label', fontSize: 12, align: 'center' })
+  startCross = new Cross()
+  endCross = new Cross()
 
   @observer<Ruler, 'startPoint'>() startPoint = [0, 0]
   @observer<Ruler, 'endPoint'>() endPoint = [0, 0]
@@ -36,20 +49,21 @@ export default class Ruler extends Kroup implements Observed {
   @observer<Ruler, 'crossRadius'>() crossRadius = 6
   @observer<Ruler, 'stroke'>() stroke = '#0099ff'
   @observer<Ruler, 'strokeWidth'>() strokeWidth = 1
+  @observer<Ruler, 'label'>() label: string
+  @observer<Ruler, 'pixelRatio'>() pixelRatio = 1
 
-  constructor(config = {} as RulerConfig & Konva.ContainerConfig) {
-    super(config)
-
-    this.assignArgs(config, ['startPoint', 'endPoint', 'rulerOffset', 'crossRadius', 'stroke', 'strokeWidth'])
+  constructor(options?: RulerConfig & ContainerConfig) {
+    super(options)
+    this.setAttrs(options ?? {})
   }
 
   update() {
-    const { startPoint, endPoint, rulerOffset: offsetY, crossRadius, stroke, strokeWidth } = this
+    const { startPoint, endPoint, rulerOffset: offsetY, crossRadius, stroke, strokeWidth, label, pixelRatio = 1 } = this
     const [x, y] = startPoint
     const [x2, y2] = endPoint
     const tr = new Konva.Transform([x2 - x, y2 - y, 0, 1, x, y])
     const { scaleX, rotation } = tr.decompose()
-    const distance = Math.abs(scaleX).toFixed(2)
+    const text = label ?? Math.round(Math.abs(scaleX * pixelRatio))
 
     this.ruler.setAttrs({
       x,
@@ -59,10 +73,10 @@ export default class Ruler extends Kroup implements Observed {
       strokeWidth,
       rotation,
     })
-    this.rulerLabel.setAttrs({ x, y, offsetY: offsetY + 14, width: scaleX, text: distance, fill: stroke, rotation })
+    this.rulerLabel.setAttrs({ x, y, offsetY: offsetY + 14, width: scaleX, text: text, fill: stroke, rotation })
 
-    this.startCross.setAttrs({ x, y, offsetY, crossRadius, stroke, strokeWidth, rotation })
-    this.endCross.setAttrs({ x: x2, y: y2, offsetY, crossRadius, stroke, strokeWidth, rotation })
+    this.startCross.setAttrs({ x, y, offsetY, radius: crossRadius, stroke, strokeWidth, rotation })
+    this.endCross.setAttrs({ x: x2, y: y2, offsetY, radius: crossRadius, stroke, strokeWidth, rotation })
 
     if (Math.abs(rotation) > 90) {
       this.rulerLabel.setAttrs({ offsetX: scaleX, offsetY: -offsetY + 14, rotation: rotation - 180 })
@@ -72,11 +86,6 @@ export default class Ruler extends Kroup implements Observed {
   }
 
   render() {
-    this.ruler = new Konva.Line({ name: 'ruler' })
-    this.rulerLabel = new Konva.Text({ name: 'ruler-label', fontSize: 12, align: 'center' })
-    this.startCross = new Cross()
-    this.endCross = new Cross()
-
     return [this.ruler, this.rulerLabel, this.startCross, this.endCross]
   }
 }

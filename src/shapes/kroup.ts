@@ -27,13 +27,49 @@ export default class Kroup extends Konva.Group implements Observed {
   @observer<Kroup, 'shadowColor'>() shadowColor = ''
   @observer<Kroup, 'shadowBlur'>() shadowBlur = 0
 
-  constructor(config: Konva.ContainerConfig) {
+  getClassName() {
+    return this.constructor.name
+  }
+
+  constructor(config = {} as Konva.ContainerConfig) {
     super(config)
+    this.setAttrs(config)
+    this.className = this.getClassName()
+
     // lazy init
     this.updated.then(() => {
-      // this.setAttrs(config)
+      // if (!this.__hasRendered) {
+      //   this.setAttrs(config)
+      // }
       this.__render()
     })
+  }
+
+  setAttr(key: string, value: any, needUpdate = true) {
+    const oldVal = this.attrs[key]
+    if (oldVal === value) {
+      return this
+    }
+
+    if (this.__hasRendered) {
+      this.propWillUpdate({ key, oldVal, newVal: value })
+    }
+    super.setAttr(key, value)
+    if (needUpdate && this.__hasRendered) {
+      this.__didUpdate()
+      this.propDidUpdate({ key, oldVal, newVal: value })
+    }
+    return this
+  }
+
+  setAttrs(attrs = {} as Record<string, any>, needUpdate = true) {
+    Object.keys(attrs).forEach(key => {
+      this.setAttr(key, attrs[key], false)
+    })
+    if (needUpdate) {
+      this.__didUpdate()
+    }
+    return this
   }
 
   /**
@@ -50,12 +86,20 @@ export default class Kroup extends Konva.Group implements Observed {
   }
 
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  propWillChange(prop: ChangedProp) {
-    throw new Error('not implemented')
+  propWillUpdate(prop: ChangedProp) {
+    // throw new Error('not implemented')
   }
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  propDidChange(prop: ChangedProp) {
-    throw new Error('not implemented')
+  propDidUpdate(prop: ChangedProp) {
+    // throw new Error('not implemented')
+  }
+
+  /**
+   * 如果有更新需求，在这里实现
+   * 注意更新是属性粒度的，不是批量更新
+   */
+  update() {
+    // throw new Error('not implemented')
   }
 
   /**
@@ -92,20 +136,12 @@ export default class Kroup extends Konva.Group implements Observed {
   }
 
   /**
-   * 如果有更新需求，在这里实现
-   * 注意更新是属性粒度的，不是批量更新
-   */
-  // update() {
-  //   // update if need.
-  // }
-
-  /**
    * 依次执行 removeAll -> render -> update
    */
   forceUpdate(callback = true) {
     this.__hasRendered = false
-    this.removeAll()
-    this.remove()
+    this.removeAllChildren()
+    // this.remove()
     this.__render()
     if (!callback) {
       return
@@ -117,10 +153,11 @@ export default class Kroup extends Konva.Group implements Observed {
   }
 
   /**
-   * 销毁所有子元素
+   * 移除所有子元素
    */
-  removeAll() {
-    this.children?.forEach(node => node.destroy())
+  removeAllChildren() {
+    this.children?.forEach(node => node.remove())
+    this.children = []
   }
 
   /**
@@ -134,6 +171,7 @@ export default class Kroup extends Konva.Group implements Observed {
 
   private __hasRendered = false
   firstRender() {
+    this.update()
     // first render callback
   }
 
@@ -150,5 +188,14 @@ export default class Kroup extends Konva.Group implements Observed {
       this.__hasRendered = true
       this.firstRender()
     }
+  }
+
+  clone(attrs: any) {
+    const clone = super.clone(attrs)
+
+    clone.removeAllChildren()
+    clone.forceUpdate()
+
+    return clone
   }
 }

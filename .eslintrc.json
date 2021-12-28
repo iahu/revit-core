@@ -19,12 +19,14 @@
         "ignoredNodes": ["ConditionalExpression"]
       }
     ],
-    "object-curly-spacing": ["warn", "always", { "arraysInObjects": false }],
     "linebreak-style": ["warn", "unix"],
     "quotes": ["warn", "single"],
     "semi": ["warn", "never"],
     "@typescript-eslint/no-non-null-assertion": ["warn"],
     "@typescript-eslint/no-unused-vars": ["warn"],
-    "@typescript-eslint/no-empty-function": ["warn"]
+    "@typescript-eslint/no-empty-function": ["warn"],
+    "no-restricted-imports": ["error", "."],
+    "eqeqeq": ["error"],
+    "@typescript-eslint/no-namespace": [2, { "allowDeclarations": true }]
   }
 }

@@ -1,3 +1,4 @@
+import { Circle } from 'konva/lib/shapes/Circle'
 import { Vector2d } from 'konva/lib/types'
 import { AuxLine } from './aux-line'
 import Kroup from './kroup'
@@ -10,6 +11,9 @@ export interface AnglerOptions {
   centerPoint?: Vector2d
   startPoint?: Vector2d
   endPoint?: Vector2d
+  centerCircleVisible?: boolean
+  centerCircleRadius?: number
+  auxLineMaxWidth?: number
 }
 
 export class Angler extends Kroup implements Observed, AnglerOptions {
@@ -19,6 +23,9 @@ export class Angler extends Kroup implements Observed, AnglerOptions {
   @observer<Angler, 'centerPoint'>() centerPoint: Vector2d
   @observer<Angler, 'startPoint'>() startPoint: Vector2d
   @observer<Angler, 'endPoint'>() endPoint: Vector2d
+  @observer<Angler, 'centerCircleVisible'>() centerCircleVisible: boolean
+  @observer<Angler, 'centerCircleRadius'>() centerCircleRadius: number
+  @observer<Angler, 'auxLineMaxWidth'>() auxLineMaxWidth: number | undefined
 
   /**
    * create elements
@@ -26,13 +33,23 @@ export class Angler extends Kroup implements Observed, AnglerOptions {
   readonly startAux = new AuxLine({ name: 'angelr-start-line' })
   readonly endAux = new AuxLine({ name: 'angler-end-line' })
   readonly labelArc = new LabelArc({ name: 'angler-label' })
+  readonly centerCircle = new Circle({ name: 'angler-center-circle' })
 
   get angle() {
     return this.labelArc.$arc.angle()
   }
 
   update() {
-    const { stroke, strokeWidth, centerPoint, startPoint, endPoint } = this
+    const {
+      stroke,
+      strokeWidth,
+      centerPoint,
+      startPoint,
+      endPoint,
+      centerCircleVisible = true,
+      centerCircleRadius = 4,
+      auxLineMaxWidth: maxWidth = 500,
+    } = this
 
     if (centerPoint && startPoint) {
       this.startAux.setAttrs({
@@ -40,6 +57,7 @@ export class Angler extends Kroup implements Observed, AnglerOptions {
         endPoint: startPoint,
         stroke,
         strokeWidth,
+        maxWidth,
       })
     }
     if (centerPoint && endPoint) {
@@ -48,14 +66,26 @@ export class Angler extends Kroup implements Observed, AnglerOptions {
         endPoint: endPoint,
         stroke,
         strokeWidth,
+        maxWidth,
       })
     }
     if (centerPoint && startPoint && endPoint) {
       this.labelArc.setAttrs({ fill: stroke, centerPoint, startPoint, endPoint })
     }
+
+    if (centerPoint) {
+      this.centerCircle.setAttrs({
+        x: centerPoint.x,
+        y: centerPoint.y,
+        stroke,
+        strokeWidth,
+        visible: centerCircleVisible,
+        radius: centerCircleRadius,
+      })
+    }
   }
 
   render() {
-    return [this.startAux, this.endAux, this.labelArc]
+    return [this.startAux, this.endAux, this.labelArc, this.centerCircle]
   }
 }

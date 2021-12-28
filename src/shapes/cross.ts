@@ -1,4 +1,6 @@
 import Konva from 'konva'
+import { Factory } from 'konva/lib/Factory'
+import { getNumberValidator } from 'konva/lib/Validators'
 import { DEG_TO_RAD } from './helper'
 import { observer } from './observer'
 
@@ -15,23 +17,19 @@ export interface CrossConfig extends Konva.ShapeConfig {
 }
 
 export default class Cross extends Konva.Shape {
-  @observer<Cross, 'angle'>() angle = 45
-  @observer<Cross, 'radius'>() radius = 8
+  angle: number
+  radius: number
 
   constructor(config?: CrossConfig) {
     super(config)
 
-    const { angle = 45, radius = 8 } = config ?? {}
-    this.angle = angle
-    this.radius = radius
+    this.setAttrs(config)
   }
 
   _sceneFunc(context: Konva.Context) {
-    const { angle, radius } = this
-
+    const { angle = 45, radius = 8 } = this.getAttrs()
     const x = radius * Math.cos(angle * DEG_TO_RAD)
     const y = radius * Math.sin(angle * DEG_TO_RAD)
-
     // \
     context.beginPath()
     context.moveTo(-x, -y)

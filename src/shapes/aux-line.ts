@@ -14,6 +14,7 @@ export interface AuxLineOptions {
   label?: string
   labelOffset?: number
   direction?: 'x' | 'y'
+  maxWidth?: number
 }
 
 const defaultPoint = { x: 0, y: 0 }
@@ -27,6 +28,7 @@ export class AuxLine extends Kroup implements AuxLineOptions {
   @observer<AuxLine, 'label'>() label = ''
   @observer<AuxLine, 'labelOffset'>() labelOffset = 6
   @observer<AuxLine, 'direction'>() direction = 'x' as const
+  @observer<AuxLine, 'maxWidth'>() maxWidth: number | undefined
 
   constructor(options = {} as AuxLineOptions & ContainerConfig) {
     super(options)
@@ -35,15 +37,7 @@ export class AuxLine extends Kroup implements AuxLineOptions {
   }
 
   update() {
-    const { stroke, strokeWidth, startPoint, endPoint, label, labelOffset } = this
-
-    this.findOne('Line').setAttrs({
-      stroke,
-      strokeWidth,
-      dash: this.dash,
-      points: vector2Point(startPoint).concat(vector2Point(endPoint)),
-    })
-
+    const { stroke, strokeWidth, startPoint, endPoint, label, labelOffset, maxWidth } = this
     const tr = new Konva.Transform([
       endPoint.x - startPoint.x,
       endPoint.y - startPoint.y,
@@ -54,6 +48,17 @@ export class AuxLine extends Kroup implements AuxLineOptions {
     ])
     const attrs = tr.decompose()
     const { scaleX, rotation } = attrs
+    const maxScaleX = maxWidth && maxWidth >= 0 ? Math.min(maxWidth, scaleX) : scaleX
+
+    this.line.setAttrs({
+      x: startPoint.x,
+      y: startPoint.y,
+      stroke,
+      strokeWidth,
+      dash: this.dash,
+      points: [0, 0, maxScaleX, 0],
+      rotation,
+    })
 
     if (label) {
       this.text.setAttrs({
@@ -61,13 +66,13 @@ export class AuxLine extends Kroup implements AuxLineOptions {
         y: startPoint.y,
         offsetY: -labelOffset,
         text: label ?? Math.abs(rotation).toFixed(2),
-        width: Math.max(40, scaleX),
+        width: Math.max(40, maxScaleX),
         fill: stroke,
         rotation,
       })
 
       if (Math.abs(rotation) > 90) {
-        this.text.setAttrs({ offsetX: scaleX, rotation: rotation - 180 })
+        this.text.setAttrs({ offsetX: maxScaleX, rotation: rotation - 180 })
       } else {
         this.text.setAttrs({ offsetX: 0, rotation: rotation })
       }

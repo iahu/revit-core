@@ -1,79 +1,11 @@
-import { randomUUID, last } from './helper'
+import { Entity, Layer } from '@shapes/index'
 import Konva from 'konva'
+import { Vector2d } from 'konva/lib/types'
 import { BehaviorSubject, map, Subject } from 'rxjs'
+import { last, randomUUID } from './helper'
+import { Point } from './typings'
 
-export type Point = {
-  x: number
-  y: number
-}
 export type Position = [number, number]
-
-export type EntityType = 'svgPath' | 'imgUrl' | 'img' | 'text' | 'line' | 'rect' | 'door' | 'svgButton'
-export interface BaseEntity extends Konva.ShapeConfig {
-  id: string
-  type: EntityType
-}
-
-export interface SvgPathEntity extends BaseEntity, Konva.PathConfig {
-  id: string
-  type: 'svgPath'
-  data: string
-}
-
-export interface ImgUrlEntity extends BaseEntity, Omit<Konva.ImageConfig, 'image'> {
-  id: string
-  type: 'imgUrl'
-  imgUrl: string
-}
-
-export interface ImgEntity extends BaseEntity, Konva.ImageConfig {
-  id: string
-  type: 'img'
-}
-
-export interface TextEntity extends BaseEntity, Konva.TextConfig {
-  id: string
-  type: 'text'
-  text: string
-}
-
-export interface LineEntity extends BaseEntity, Konva.TextConfig {
-  id: string
-  type: 'line'
-}
-
-export interface RectEntity extends BaseEntity, Konva.TextConfig {
-  id: string
-  type: 'rect'
-}
-
-export interface DoorEntity extends BaseEntity, Konva.TextConfig {
-  id: string
-  type: 'door'
-}
-export interface SvgButtonEntity extends BaseEntity, Konva.TextConfig {
-  id: string
-  type: 'svgButton'
-}
-
-export type Entity =
-  | SvgPathEntity
-  | ImgUrlEntity
-  | ImgEntity
-  | TextEntity
-  | LineEntity
-  | RectEntity
-  | DoorEntity
-  | SvgButtonEntity
-
-export interface Layer extends Konva.LayerConfig {
-  id: string
-  name?: string
-  backgroundColor?: string
-  backgroundImage?: string
-  backgroundPosition?: Position
-  entities: Array<Entity>
-}
 
 // 暂时就支持一种中心方式
 export type Center = 'world'
@@ -128,7 +60,7 @@ export default class Store {
 
   center: Center = 'world'
 
-  get centerPoint(): Point {
+  get centerPoint(): Vector2d {
     const { canvas, center } = this
     if (center === 'world') {
       // 仅支持世界中心
@@ -137,7 +69,7 @@ export default class Store {
     return { x: 0, y: 0 }
   }
 
-  cursor: Point = {
+  cursor: Vector2d = {
     x: 0,
     y: 0,
   }
