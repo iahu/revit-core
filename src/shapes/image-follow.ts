@@ -1,8 +1,8 @@
 import Konva from 'konva'
 import { ContainerConfig } from 'konva/lib/Container'
-import Kroup from './kroup'
-import { Observed, observer, ChangedProp } from './observer'
 import { listenOn } from '../actions/helper'
+import Kroup from './kroup'
+import { attr, Observed } from './observer'
 
 export interface ImageFollowOptions {
   img_follow?: string
@@ -11,10 +11,10 @@ export interface ImageFollowOptions {
 //图片1跟随鼠标移动，点击后，停止移动，显示图片2
 //type: imageFollow
 export class ImageFollow extends Kroup implements Observed, ImageFollowOptions {
-  @observer<ImageFollow, 'img_follow'>() img_follow = ''
-  @observer<ImageFollow, 'img_down'>() img_down = ''
-  _image_follow = new Image();
-  _image_down = new Image();
+  @attr<ImageFollow, 'img_follow'>() img_follow = ''
+  @attr<ImageFollow, 'img_down'>() img_down = ''
+  _image_follow = new Image()
+  _image_down = new Image()
   stopListenMousemove: any
   stopListenMousedown: any
   constructor(options = {} as ImageFollowOptions & ContainerConfig) {
@@ -38,7 +38,7 @@ export class ImageFollow extends Kroup implements Observed, ImageFollowOptions {
         this.$down.setAttrs({
           visible: true,
           x: this.$follow.x(),
-          y: this.$follow.y()
+          y: this.$follow.y(),
         })
         this.stopListenMousedown()
         this.stopListenMousemove()

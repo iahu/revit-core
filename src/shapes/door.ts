@@ -3,7 +3,7 @@ import Konva from 'konva'
 import { ContainerConfig } from 'konva/lib/Container'
 import { DEG_TO_RAD } from './helper'
 import Kroup from './kroup'
-import { Observed, observer } from './observer'
+import { Observed, attr } from './observer'
 
 export interface DoorOptions {
   stroke?: string | CanvasGradient
@@ -25,14 +25,14 @@ export interface DoorOptions {
 }
 
 export class Door extends Kroup implements Observed, DoorOptions {
-  @observer<Door, 'panelWidth'>() panelWidth = 40
-  @observer<Door, 'panelStrokeWidth'>() panelStrokeWidth = 1
-  @observer<Door, 'panelThickness'>() panelThickness = 2
-  @observer<Door, 'panelFill'>() panelFill = ''
-  @observer<Door, 'wallThickness'>() wallThickness = 8
-  @observer<Door, 'wallFill'>() wallFill = 'white'
-  @observer<Door, 'openDirection'>() openDirection: DoorOptions['openDirection'] = 'right'
-  @observer<Door, 'openAngle'>() openAngle = 90
+  @attr<Door, 'panelWidth'>() panelWidth = 40
+  @attr<Door, 'panelStrokeWidth'>() panelStrokeWidth = 1
+  @attr<Door, 'panelThickness'>() panelThickness = 2
+  @attr<Door, 'panelFill'>() panelFill = ''
+  @attr<Door, 'wallThickness'>() wallThickness = 8
+  @attr<Door, 'wallFill'>() wallFill = 'white'
+  @attr<Door, 'openDirection'>() openDirection: DoorOptions['openDirection'] = 'right'
+  @attr<Door, 'openAngle'>() openAngle = 90
 
   $cover = new Konva.Rect({ name: 'door-background unselectable' })
   $wall = new Konva.Rect({ name: 'door-wall', stroke: this.stroke, strokeWidth: this.strokeWidth })

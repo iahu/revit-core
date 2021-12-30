@@ -3,7 +3,7 @@ import { ContainerConfig } from 'konva/lib/Container'
 import Cross from './cross'
 import { EditableText } from './editable-text'
 import Kroup from './kroup'
-import { Observed, observer } from './observer'
+import { Observed, attr } from './observer'
 
 export interface RulerConfig {
   /**
@@ -22,7 +22,7 @@ export interface RulerConfig {
 
   crossRadius?: number
 
-  stroke?: string
+  stroke?: string | CanvasGradient
   strokeWidth?: number
 
   editable?: boolean
@@ -43,14 +43,14 @@ export default class Ruler extends Kroup implements Observed {
   startCross = new Cross()
   endCross = new Cross()
 
-  @observer<Ruler, 'startPoint'>() startPoint = [0, 0]
-  @observer<Ruler, 'endPoint'>() endPoint = [0, 0]
-  @observer<Ruler, 'rulerOffset'>() rulerOffset = 20
-  @observer<Ruler, 'crossRadius'>() crossRadius = 6
-  @observer<Ruler, 'stroke'>() stroke = '#0099ff'
-  @observer<Ruler, 'strokeWidth'>() strokeWidth = 1
-  @observer<Ruler, 'label'>() label: string
-  @observer<Ruler, 'pixelRatio'>() pixelRatio = 1
+  @attr<Ruler, 'startPoint'>() startPoint = [0, 0]
+  @attr<Ruler, 'endPoint'>() endPoint = [0, 0]
+  @attr<Ruler, 'rulerOffset'>() rulerOffset = 20
+  @attr<Ruler, 'crossRadius'>() crossRadius = 6
+  @attr<Ruler, 'stroke'>() stroke = '#0099ff'
+  @attr<Ruler, 'strokeWidth'>() strokeWidth = 1
+  @attr<Ruler, 'label'>() label: string
+  @attr<Ruler, 'pixelRatio'>() pixelRatio = 1
 
   constructor(options?: RulerConfig & ContainerConfig) {
     super(options)

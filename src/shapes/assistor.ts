@@ -1,7 +1,7 @@
 import Konva from 'konva'
 import Compass from './compass'
 import Kroup from './kroup'
-import { observer } from './observer'
+import { attr } from './observer'
 import Ruler from './ruler'
 
 export interface AssistorConfig {
@@ -57,27 +57,27 @@ export default class Assistor extends Kroup {
   compass: Compass
 
   // config
-  @observer<Assistor, 'startPoint'>({ beforeSet: mapPoint }) startPoint = [0, 0]
-  @observer<Assistor, 'endPoint'>({ beforeSet: mapPoint }) endPoint = [0, 0]
+  @attr<Assistor, 'startPoint'>({ beforeSet: mapPoint }) startPoint = [0, 0]
+  @attr<Assistor, 'endPoint'>({ beforeSet: mapPoint }) endPoint = [0, 0]
 
-  @observer<Assistor, 'rulerOffset'>() rulerOffset = 30
+  @attr<Assistor, 'rulerOffset'>() rulerOffset = 30
 
-  @observer<Assistor, 'stroke'>() stroke = '#0099ff'
+  @attr<Assistor, 'stroke'>() stroke = '#0099ff'
 
-  @observer<Assistor, 'strokeWidth'>() strokeWidth = 1
+  @attr<Assistor, 'strokeWidth'>() strokeWidth = 1
 
-  @observer<Assistor, 'crossRadius'>() crossRadius = 6
+  @attr<Assistor, 'crossRadius'>() crossRadius = 6
 
-  @observer<Assistor, 'xAxisWidth'>() xAxisWidth = 300
+  @attr<Assistor, 'xAxisWidth'>() xAxisWidth = 300
 
-  @observer<Assistor, 'compassRadius'>() compassRadius = 150
+  @attr<Assistor, 'compassRadius'>() compassRadius = 150
 
-  @observer<Assistor, 'snapAngles'>() snapAngles = [0, 45, 90, 135, 180]
-  @observer<Assistor, 'snapMaxAngle'>() snapMaxAngle = 1
+  @attr<Assistor, 'snapAngles'>() snapAngles = [0, 45, 90, 135, 180]
+  @attr<Assistor, 'snapMaxAngle'>() snapMaxAngle = 1
 
-  @observer<Assistor, 'showCompass'>() showCompass = true
+  @attr<Assistor, 'showCompass'>() showCompass = true
 
-  @observer<Assistor, 'pixelRatio'>() pixelRatio = 1
+  @attr<Assistor, 'pixelRatio'>() pixelRatio = 1
 
   constructor(config = {} as AssistorConfig & Konva.ContainerConfig) {
     super(config)

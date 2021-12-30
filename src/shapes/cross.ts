@@ -2,7 +2,7 @@ import Konva from 'konva'
 import { Factory } from 'konva/lib/Factory'
 import { getNumberValidator } from 'konva/lib/Validators'
 import { DEG_TO_RAD } from './helper'
-import { observer } from './observer'
+import { attr } from './observer'
 
 export interface CrossConfig extends Konva.ShapeConfig {
   /**

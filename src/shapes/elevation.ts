@@ -2,9 +2,10 @@ import { HIGHLIGHT_CLASSNAME } from '@actions/helper'
 import { ContainerConfig } from 'konva/lib/Container'
 import { KonvaEventObject } from 'konva/lib/Node'
 import { FlagLabel } from './flag-label'
+import { fireChangeEvent } from './helper'
 import Kroup from './kroup'
 import { Level } from './level'
-import { Observed, observer } from './observer'
+import { ChangedProp, Observed, attr } from './observer'
 import { ResizeHandler } from './resize-handler'
 
 export interface ElevationOptions {
@@ -12,17 +13,17 @@ export interface ElevationOptions {
   flagHeight?: number
   title?: string
   label?: string
-  editable?: boolean
+  resizable?: boolean
   dotRadius?: number
 }
 
 export class Elevation extends Kroup implements Observed {
-  @observer<Elevation, 'flagWidth'>() flagWidth = 80
-  @observer<Elevation, 'flagHeight'>() flagHeight = 10
-  @observer<Elevation, 'title'>() title: string | undefined
-  @observer<Elevation, 'label'>() label: string | undefined
-  @observer<Elevation, 'editable'>() editable = false
-  @observer<Elevation, 'dotRadius'>() dotRadius = 4
+  @attr<Elevation, 'flagWidth'>() flagWidth = 80
+  @attr<Elevation, 'flagHeight'>() flagHeight = 10
+  @attr<Elevation, 'title'>() title: string | undefined
+  @attr<Elevation, 'label'>() label: string | undefined
+  @attr<Elevation, 'resizable'>() resizable = false
+  @attr<Elevation, 'dotRadius'>() dotRadius = 4
 
   $level = new Level({ name: 'elevation-level unselectable' })
   $liveLevel = new Level({ name: 'elevation-live-level unselectable' })
@@ -41,6 +42,8 @@ export class Elevation extends Kroup implements Observed {
     this.$startDot.on('resizeEnd', this.onRepositionEnd)
     this.$endDot.on('resizeStart', this.onResizeStart)
     this.$endDot.on('resize', this.onResize)
+    this.on('mouseover', this.onMouseOver)
+    this.on('mouseout', this.onMouseOut)
   }
 
   onRepositionStart = () => {
@@ -79,10 +82,23 @@ export class Elevation extends Kroup implements Observed {
     }
   }
 
+  onMouseOver = () => {
+    this.resizable = true
+  }
+  onMouseOut = () => {
+    this.resizable = false
+  }
+
+  propDidUpdate(prop: ChangedProp) {
+    if (prop.key === 'name') {
+      fireChangeEvent(this, 'name', prop)
+    }
+  }
+
   update() {
-    const { flagWidth, flagHeight, title, label = '±0.00', editable } = this
+    const { flagWidth, flagHeight, title, label = '±0.00', resizable } = this
     const { width, stroke, strokeWidth } = this.getAttrs()
-    const dotVisible = this.hasName(HIGHLIGHT_CLASSNAME) || editable
+    const dotVisible = this.hasName(HIGHLIGHT_CLASSNAME) || resizable
     this.$level.setAttrs({ width, stroke, strokeWidth })
     this.$flagLabel.setAttrs({ x: width, width: flagWidth, height: flagHeight, stroke, strokeWidth, title, label })
 

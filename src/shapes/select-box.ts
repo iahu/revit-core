@@ -1,6 +1,6 @@
 import Konva from 'konva'
 import Kroup from './kroup'
-import { Observed, observer } from './observer'
+import { Observed, attr } from './observer'
 import { getTransformer } from '../helpers/transfomer'
 import { ContainerConfig } from 'konva/lib/Container'
 export interface SelectBoxOption {
@@ -14,11 +14,11 @@ export interface SelectBoxOption {
 }
 /**按 enter 键后，物体周围显示的边框 */
 export class SelectBox extends Kroup implements Observed, SelectBoxOption {
-  @observer<SelectBox, 'selector'>() selector = ''
-  @observer<SelectBox, 'stroke'>() stroke = '#0099ff'
-  @observer<SelectBox, 'strokeWidth'>() strokeWidth = 1
-  @observer<SelectBox, 'data'>() data = ''
-  @observer<SelectBox, 'dash'>() dash = [10, 10]
+  @attr<SelectBox, 'selector'>() selector = ''
+  @attr<SelectBox, 'stroke'>() stroke = '#0099ff'
+  @attr<SelectBox, 'strokeWidth'>() strokeWidth = 1
+  @attr<SelectBox, 'data'>() data = ''
+  @attr<SelectBox, 'dash'>() dash = [10, 10]
   constructor(options: SelectBoxOption & ContainerConfig) {
     super(options)
     this.name('unselectable')

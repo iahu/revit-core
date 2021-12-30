@@ -3,7 +3,7 @@ import { Vector2d } from 'konva/lib/types'
 import { vector2Point } from '../actions/helper'
 import { getScalar, toDeg180, toDeg360 } from './helper'
 import Kroup from './kroup'
-import { Observed, observer } from './observer'
+import { Observed, attr } from './observer'
 
 export interface LabelArcOptions {
   stroke?: string
@@ -15,14 +15,14 @@ export interface LabelArcOptions {
 }
 
 export class LabelArc extends Kroup implements Observed, LabelArcOptions {
-  @observer<LabelArc, 'stroke'>() stroke = '#3399ff'
-  @observer<LabelArc, 'strokeWidth'>() strokeWidth = 1
+  @attr<LabelArc, 'stroke'>() stroke = '#3399ff'
+  @attr<LabelArc, 'strokeWidth'>() strokeWidth = 1
 
-  @observer<LabelArc, 'centerPoint'>() centerPoint = { x: 0, y: 0 } as Vector2d
-  @observer<LabelArc, 'startPoint'>() startPoint: Vector2d
-  @observer<LabelArc, 'endPoint'>() endPoint: Vector2d
+  @attr<LabelArc, 'centerPoint'>() centerPoint = { x: 0, y: 0 } as Vector2d
+  @attr<LabelArc, 'startPoint'>() startPoint: Vector2d
+  @attr<LabelArc, 'endPoint'>() endPoint: Vector2d
 
-  @observer<LabelArc, 'radius'>() radius = 20
+  @attr<LabelArc, 'radius'>() radius = 20
 
   readonly $arc = new Konva.Arc({
     name: 'label-arc-arc',

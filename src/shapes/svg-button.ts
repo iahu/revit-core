@@ -1,6 +1,6 @@
 import Konva from 'konva'
 import Kroup from './kroup'
-import { Observed, observer } from './observer'
+import { Observed, attr } from './observer'
 import { ContainerConfig } from 'konva/lib/Container'
 export interface SvgButtonOptions {
   stroke?: string | CanvasGradient
@@ -13,19 +13,19 @@ export interface SvgButtonOptions {
   /*按钮样式-按下 */
   mouseDownData?: string
   /**虚线间距 */
-  dash?: number[],
+  dash?: number[]
   mouseType?: 'over' | 'down' | 'normal'
 }
 export class SvgButton extends Kroup implements Observed, SvgButtonOptions {
-  @observer<SvgButton, 'stroke'>() stroke = 'rgb(255,48,48)'
-  @observer<SvgButton, 'fill'>() fill = 'rgba(0,0,0,0.1)'
-  @observer<SvgButton, 'strokeWidth'>() strokeWidth = 2
-  @observer<SvgButton, 'mouseData'>() mouseData = ''
-  @observer<SvgButton, 'mouseOverData'>() mouseOverData = ''
-  @observer<SvgButton, 'mouseDownData'>() mouseDownData = ''
+  @attr<SvgButton, 'stroke'>() stroke = 'rgb(255,48,48)'
+  @attr<SvgButton, 'fill'>() fill = 'rgba(0,0,0,0.1)'
+  @attr<SvgButton, 'strokeWidth'>() strokeWidth = 2
+  @attr<SvgButton, 'mouseData'>() mouseData = ''
+  @attr<SvgButton, 'mouseOverData'>() mouseOverData = ''
+  @attr<SvgButton, 'mouseDownData'>() mouseDownData = ''
   _mouseType: SvgButtonOptions['mouseType'] = 'normal'
-  @observer<SvgButton, 'mouseType'>() mouseType: SvgButtonOptions['mouseType'] = 'normal'
-  @observer<SvgButton, 'dash'>() dash = []
+  @attr<SvgButton, 'mouseType'>() mouseType: SvgButtonOptions['mouseType'] = 'normal'
+  @attr<SvgButton, 'dash'>() dash = []
   constructor(options = {} as SvgButtonOptions & ContainerConfig) {
     super(options)
     if (!options.mouseData) {
@@ -65,13 +65,13 @@ export class SvgButton extends Kroup implements Observed, SvgButtonOptions {
     const { $mouseDraw, stroke, fill, strokeWidth, dash, mouseData, mouseOverData, mouseDownData, _mouseType } = this
     let data = mouseData
     if (_mouseType == 'over' && mouseOverData) data = mouseOverData
-    else if (_mouseType == 'down') data = mouseDownData ? mouseDownData : (mouseOverData ? mouseOverData : mouseData)
+    else if (_mouseType == 'down') data = mouseDownData ? mouseDownData : mouseOverData ? mouseOverData : mouseData
     $mouseDraw.setAttrs({
       stroke: stroke,
       fill: fill,
       strokeWidth: strokeWidth,
       dash: dash,
-      data: data
+      data: data,
     })
   }
   render() {

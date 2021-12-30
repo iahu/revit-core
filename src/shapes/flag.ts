@@ -1,5 +1,5 @@
 import Konva from 'konva'
-import { observer } from './observer'
+import { attr } from './observer'
 
 export interface FlagOptions extends Konva.ShapeConfig {
   flagWidth?: number
@@ -8,9 +8,9 @@ export interface FlagOptions extends Konva.ShapeConfig {
 }
 
 export class Flag extends Konva.Shape {
-  @observer<Flag, 'flagWidth'>() flagWidth = 20
-  @observer<Flag, 'flipX'>() flipX = false
-  @observer<Flag, 'flipY'>() flipY = false
+  @attr<Flag, 'flagWidth'>() flagWidth = 20
+  @attr<Flag, 'flipX'>() flipX = false
+  @attr<Flag, 'flipY'>() flipY = false
 
   constructor(options?: FlagOptions) {
     super(options)

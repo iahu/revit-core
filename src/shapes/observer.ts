@@ -26,7 +26,7 @@ export const invok = (target: any, key: string, args: any[] | any) => {
   }
 }
 
-const _fireChangeEvent = (target: Konva.Node, key: string, eventData: any) => {
+export const _fireChangeEvent = (target: Konva.Node, key: string, eventData: any) => {
   if (target instanceof Konva.Node) {
     target.fire(`${key}Change`, eventData)
   }
@@ -51,15 +51,15 @@ type ObserverDecorator<R extends Konva.Node, S extends string & keyof R> = (
 /**
  * Konva style set/get observer decorator
  */
-export function observer<T extends Konva.Node, P extends string & keyof T>(
+export function attr<T extends Konva.Node, P extends string & keyof T>(
   target: T,
   propertyKey: P,
   options?: ObserverOptions<T, T[P]>,
 ): ObserverDecorator<T, P>
-export function observer<T extends Konva.Node, P extends string & keyof T>(
+export function attr<T extends Konva.Node, P extends string & keyof T>(
   options?: ObserverOptions<T, T[P]>,
 ): ObserverDecorator<T, P>
-export function observer<T extends Konva.Node, P extends string & keyof T>(
+export function attr<T extends Konva.Node, P extends string & keyof T>(
   target?: T,
   propertyKey?: P,
   options?: ObserverOptions<T, T[P]>,
@@ -88,15 +88,15 @@ export function observer<T extends Konva.Node, P extends string & keyof T>(
           // lifecycle callback
           const newVal = beforeSet.call(this, nextValue, oldVal, this)
           const changedProp = { key, oldVal, newVal }
-          if (hasRendered) {
-            invok(this, 'propWillUpdate', changedProp)
-          }
+          // if (hasRendered) {
+          //   invok(this, 'propWillUpdate', changedProp)
+          // }
           attrs[key] = nextValue
-          invok(this, '__didUpdate', changedProp)
+          // invok(this, '__didUpdate', changedProp)
 
-          if (hasRendered) {
-            invok(this, 'propDidUpdate', changedProp)
-          }
+          // if (hasRendered) {
+          //   invok(this, 'propDidUpdate', changedProp)
+          // }
           afterSet?.call(this, oldVal, newVal, this)
           fireChangeEvent && _fireChangeEvent(this, key, changedProp)
         } else {
@@ -132,8 +132,6 @@ export const useGetterSetter = <T, K extends string & keyof T>(target: T, key: K
 /**
  * sample observe
  */
-export const observe = observer()
-
 export type ChangedProp<T = any, K extends string = string> = { key: K; oldVal: T; newVal: T }
 export type PropChangeCallback = (prop: ChangedProp) => void
 
@@ -141,7 +139,7 @@ export interface Observed {
   /**
    * Observer 更新属性前回调
    */
-  propWillChange?: PropChangeCallback
+  propWillUpdate?: PropChangeCallback
   /**
    * Observer 更新属性后回调
    */

@@ -7,6 +7,7 @@ export const unSelectAll = (stage: Stage) => {
   const transfomer = getTransformer(stage)
   stage.find(`.${SELECTED_CLASSNAME}`).forEach(n => {
     n.removeName(SELECTED_CLASSNAME)
+    n.fire('unselected', undefined, true)
   })
   resetHighlight(stage)
   transfomer.nodes([])
@@ -18,7 +19,10 @@ export const applySelect = (stage: Stage, nodes: ShapeOrGroup[], useHistory = fa
   unSelectAll(stage)
   // add selected class name
   setHightlight(nodes)
-  nodes.forEach(node => node.addName(SELECTED_CLASSNAME))
+  nodes.forEach(node => {
+    node.addName(SELECTED_CLASSNAME)
+    node.fire('selected', undefined, true)
+  })
 
   if (useHistory) {
     transfomer.nodes(transfomer.nodes().concat(nodes))

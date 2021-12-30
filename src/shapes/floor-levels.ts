@@ -1,14 +1,13 @@
+import { SELECTED_CLASSNAME } from '@actions/helper'
 import { ShapeOrGroup } from 'index'
 import { ContainerConfig } from 'konva/lib/Container'
 import { KonvaEventObject } from 'konva/lib/Node'
-import { Rect } from 'konva/lib/shapes/Rect'
-import { KonvaNodeEvent } from 'konva/lib/types'
 import { EditableText } from './editable-text'
 import { Elevation } from './elevation'
 import { closest } from './helper'
 import { createShape } from './index'
 import Kroup from './kroup'
-import { ChangedProp, KonvaChangeEvent, Observed, observer } from './observer'
+import { attr, ChangedProp, KonvaChangeEvent, Observed } from './observer'
 import Ruler from './ruler'
 
 interface LevelOptions {
@@ -38,10 +37,10 @@ export interface FloorLevelsOptions {
 const identity: Formatter = n => `${Number(n).toFixed(2)}`
 
 export class FloorLevels extends Kroup implements Observed {
-  @observer<FloorLevels, 'floorLevels'>() floorLevels = [] as LevelOptions[]
-  @observer<FloorLevels, 'formatter'>() formatter: Formatter
-  @observer<FloorLevels, 'editEnable'>() editEnable = false
-  @observer<FloorLevels, 'rulerVisiable'>() rulerVisiable = false
+  @attr<FloorLevels, 'floorLevels'>() floorLevels = [] as LevelOptions[]
+  @attr<FloorLevels, 'formatter'>() formatter: Formatter
+  @attr<FloorLevels, 'editable'>() editable = false
+  @attr<FloorLevels, 'rulerVisiable'>() rulerVisiable = false
 
   get sortedLevels() {
     return this.floorLevels.sort((a, b) => a.y - b.y)
@@ -52,88 +51,106 @@ export class FloorLevels extends Kroup implements Observed {
   }
 
   findElevationByIndex(index: number) {
-    return this.children?.filter(item => item.className === 'Elevation')[index]
+    return this.children?.filter(item => item.className === 'Elevation')[index] as Elevation
   }
 
   constructor(options: FloorLevelsOptions & ContainerConfig) {
     super({ draggable: false, ...options })
+
     this.setAttrs({ draggable: false, ...options })
-    this.on('click', this.onClick)
     this.on('textChange', this.onTextChange)
-    this.on('editEnableChange', this.onEditEnable)
+    this.on('editableChange', this.onEditableChange)
     this.on('dragstart', this.onDragStart)
     this.on('dragend', this.onDragEnd)
     this.on('resizeEnd', this.onResizeEnd)
+    this.on('selected', this.onSelected)
+    this.on('unselected', this.onUnSelected)
   }
 
-  @observer<FloorLevels, 'highlightElevation'>() highlightElevation: Elevation | undefined
-  onClick = (e: KonvaEventObject<Event>) => {
-    const { target } = e
-    const elevation = closest<Elevation>(e.target, '.floor-levels-elevation')
-    const isBackground = target.hasName('floor-levels-background')
+  @attr<FloorLevels, 'selectedElevation'>() selectedElevation: Elevation | undefined
+
+  get previousElevation(): Elevation | undefined {
+    return this.selectedElevation
+      ? this.findElevationByIndex(this.selectedElevation.getAttr('levelOrder') - 1)
+      : undefined
+  }
+
+  get nextElevation(): Elevation | undefined {
+    return this.selectedElevation
+      ? this.findElevationByIndex(this.selectedElevation.getAttr('levelOrder') + 1)
+      : undefined
+  }
+
+  onSelected = (e: KonvaEventObject<Event>) => {
+    const elevation = closest<Elevation>(e.target, 'Elevation')
     if (elevation) {
-      this.highlightElevation = elevation
-      this.rulerVisiable = elevation.getAttr('levelOrder') > 0
-      this.updateRuler()
-      // this.add(this.$ruler)
-    } else if (!this.editEnable && isBackground) {
-      // this.$ruler.remove()
-      this.rulerVisiable = false
-      this.highlightElevation = undefined
+      this.selectedElevation = elevation
+      this.rulerVisiable = true
+    }
+
+    if (e.target instanceof FloorLevels) {
+      this.rulerVisiable = true
     }
   }
-
-  updateRuler() {
-    const elevation = this.highlightElevation
-    if (!elevation) {
-      return
-    }
-    const order = elevation.getAttr('levelOrder')
-    if (order > 0) {
-      const previous = this.findElevationByIndex(order - 1) ?? elevation
-      const maxX = Math.max(previous.x(), elevation.x())
-      const minWidth = Math.min(previous.x() + previous.width(), elevation.x() + elevation.width())
-      const averagedX = (maxX + minWidth) / 2
-
-      this.$ruler.setAttrs({
-        x: averagedX,
-        startPoint: [0, previous.y()],
-        endPoint: [0, elevation.y()],
-      })
-    } else {
-      this.highlightElevation = undefined
-    }
+  onUnSelected = () => {
+    // this.selectedElevation = undefined
+    this.updated.then(() => {
+      if (!this.findOne(`.${SELECTED_CLASSNAME}`) && !this.editable) {
+        this.rulerVisiable = false
+      }
+    })
   }
 
   onTextChange = (e: KonvaEventObject<Event>) => {
     const { target, newVal } = e as KonvaChangeEvent<EditableText, 'text'>
     const elevation = closest<ShapeOrGroup>(target, '.floor-levels-elevation')
-    if (!elevation) return
+    const ruler = closest(target, '.floor-levels-ruler')
 
-    const index = elevation.getAttr('levelOrder')
-    const level = this.sortedLevels[index]
-
-    if (target.hasName('flag-label-title')) {
-      if (level) {
-        level.title = newVal
-        this.floorLevels = [...this.sortedLevels]
+    if (ruler) {
+      // bottom ruler
+      if (ruler.hasName('bottom')) {
+        const levelConfig = this.selectedElevation?.getAttr('levelConfig')
+        const previous = this.previousElevation
+        if (levelConfig && previous) {
+          levelConfig.y = parseFloat(newVal ?? '') - previous.y()
+          this.floorLevels = [...this.sortedLevels]
+        }
+      } else {
+        // top ruler
+        const { selectedElevation } = this
+        const order = selectedElevation?.getAttr('levelOrder')
+        const levelConfig = this.findElevationByIndex(order + 1)?.getAttr('levelConfig')
+        if (selectedElevation && levelConfig) {
+          levelConfig.y = parseFloat(newVal ?? '') - selectedElevation.y()
+          this.floorLevels = [...this.sortedLevels]
+        }
       }
     }
 
-    if (target.hasName('flag-label-label') || target.hasName('ruler-label')) {
-      level.y = parseFloat(newVal ?? '')
-      this.editEnable = false
-      this.updated.then(() => {
-        this.floorLevels = [...this.sortedLevels]
-      })
+    if (elevation) {
+      const level = elevation.getAttr('levelConfig')
+
+      // title
+      if (target.hasName('flag-label-title')) {
+        if (level) {
+          level.title = newVal
+          this.floorLevels = [...this.sortedLevels]
+        }
+      }
+
+      // label
+      if (target.hasName('flag-label-label') || target.hasName('ruler-label')) {
+        level.y = parseFloat(newVal ?? '')
+        this.updated.then(() => {
+          this.floorLevels = [...this.sortedLevels]
+        })
+      }
     }
   }
 
-  onEditEnable = (e: KonvaEventObject<Event>) => {
-    const { newVal } = e as KonvaChangeEvent<EditableText, 'editEnable'>
-    setTimeout(() => {
-      this.editEnable = newVal
-    })
+  onEditableChange = (e: KonvaEventObject<Event>) => {
+    const { newVal } = e as KonvaChangeEvent<EditableText, 'editable'>
+    this.editable = newVal
   }
 
   onDragStart(e: KonvaEventObject<Event>) {
@@ -146,15 +163,13 @@ export class FloorLevels extends Kroup implements Observed {
     const { target } = e
     const elevation = closest<Elevation>(target, '.floor-levels-elevation')
     if ((target as unknown) !== this && elevation) {
-      const level = this.findLevelByIndex(elevation.getAttr('levelOrder'))
+      const order = elevation.getAttr('levelOrder')
+      const level = this.findLevelByIndex(order)
       level.x = elevation.x()
       level.y = -elevation.y()
       level.width = elevation.width()
+      this.rulerVisiable = true
       this.floorLevels = [...this.sortedLevels]
-      this.updated.then(() => {
-        this.rulerVisiable = true
-        this.updateRuler()
-      })
     }
   }
 
@@ -186,42 +201,35 @@ export class FloorLevels extends Kroup implements Observed {
   }
 
   propDidUpdate(prop: ChangedProp) {
-    const { key, newVal, oldVal } = prop
+    const { key, newVal } = prop
     if (key === 'floorLevels') {
-      const elevations = this.renderLevels(newVal)
-      this.removeAllChildren()
-      if (elevations.length) {
-        this.$background.setAttrs({ width: this.width(), height: -this.height(), opacity: 0 })
-        this.add(this.$background)
-        this.add(...elevations)
-        this.highlightElevation = elevations[this.highlightElevation?.getAttr('levelOrder')]
-        this.updateRuler()
-      }
+      this.rerender()
     } else if (key === 'formatter') {
       this.children?.forEach(child => {
         child.setAttrs({ label: newVal(child.getAttr('originalLabel')) })
       })
     } else if (key === 'rulerVisiable') {
-      if (newVal) {
-        this.$ruler.visible(true)
-        this.updateRuler()
-        this.add(this.$ruler)
-      } else {
-        this.$ruler.visible(false)
-        this.$ruler.remove()
-      }
-    } else if (key === 'highlightElevation') {
-      if (oldVal) {
-        oldVal.editable = false
-      }
-      if (newVal) {
-        newVal.editable = true
-      }
+      this.updateRuler()
+    } else if (key === 'selectedElevation') {
+      this.updateRuler()
     }
   }
 
-  $background = new Rect({ name: 'floor-levels-background unselectable', index: 0, fill: 'red' })
-  $ruler = new Ruler({ name: 'floor-levels-ruler', crossRadius: 4, startPoint: [0, 0], visible: false, rulerOffset: 0 })
+  $topRuler = new Ruler({
+    name: 'floor-levels-ruler top',
+    crossRadius: 4,
+    startPoint: [0, 0],
+    rulerOffset: 0,
+    visible: false,
+  })
+
+  $bottomRuler = new Ruler({
+    name: 'floor-levels-ruler bottom',
+    crossRadius: 4,
+    startPoint: [0, 0],
+    rulerOffset: 0,
+    visible: false,
+  })
 
   renderLevels(data: LevelOptions[]) {
     const width = this.width()
@@ -239,17 +247,71 @@ export class FloorLevels extends Kroup implements Observed {
         title: opts.title ?? `标高${idx}`,
         originalLabel: opts.label ?? opts.y,
         label: formatter(opts.label ?? opts.y),
-        draggable: false,
+        zindex: idx,
       })
     }) as Elevation[]
   }
 
-  firstRender() {
+  caclutateRuleAttributes(first: Elevation, second: Elevation) {
+    const maxX = Math.max(first.x(), second.x())
+    const minWidth = Math.min(first.x() + first.width(), second.x() + second.width())
+    const averagedX = (maxX + minWidth) / 2
+    return {
+      x: averagedX,
+      startPoint: [0, first.y()],
+      endPoint: [0, second.y()],
+    }
+  }
+
+  updateRuler() {
+    const { selectedElevation } = this
+    if (!selectedElevation) {
+      this.$topRuler.remove()
+      this.$bottomRuler.remove()
+      return
+    }
+    const order = selectedElevation.getAttr('levelOrder')
+    if (order > 0) {
+      const { rulerVisiable, nextElevation: next, previousElevation: previous } = this
+
+      if (previous) {
+        this.$bottomRuler.setAttrs(this.caclutateRuleAttributes(previous, selectedElevation))
+      }
+      if (next) {
+        this.$topRuler.setAttrs(this.caclutateRuleAttributes(selectedElevation, next))
+      }
+
+      this.$topRuler.visible(rulerVisiable)
+      if (!this.children?.includes(this.$topRuler)) {
+        this.add(this.$topRuler)
+      }
+
+      this.$bottomRuler.visible(rulerVisiable)
+      if (!this.children?.includes(this.$bottomRuler)) {
+        this.$bottomRuler.parent = null
+        this.add(this.$bottomRuler)
+      }
+    }
+  }
+
+  rerender() {
+    this.removeAllChildren()
     const elevations = this.renderLevels(this.sortedLevels)
     this.add(...elevations)
+    const { selectedElevation } = this
+    if (selectedElevation) {
+      const order = selectedElevation?.getAttr('levelOrder')
+      this.selectedElevation = elevations[order]
+    }
+    this.add(this.$topRuler)
+    this.add(this.$bottomRuler)
+    if (this.rulerVisiable && this.selectedElevation) {
+      this.updateRuler()
+    }
   }
 
   render() {
+    this.rerender()
     return []
   }
 }

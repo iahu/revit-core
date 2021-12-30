@@ -1,7 +1,7 @@
 import { EditableText } from './editable-text'
 import { Flag } from './flag'
 import Kroup from './kroup'
-import { Observed, observer } from './observer'
+import { Observed, attr } from './observer'
 
 export interface FlagLabelOptions {
   stroke?: string | CanvasGradient
@@ -10,8 +10,8 @@ export interface FlagLabelOptions {
 }
 
 export class FlagLabel extends Kroup implements Observed, FlagLabelOptions {
-  @observer<FlagLabel, 'label'>() label = '±0.000'
-  @observer<FlagLabel, 'title'>() title = '标高'
+  @attr<FlagLabel, 'label'>() label = '±0.000'
+  @attr<FlagLabel, 'title'>() title = '标高'
 
   $flag = new Flag({ name: 'flag-label-flag' })
   $label = new EditableText({ name: 'flag-label-label' })

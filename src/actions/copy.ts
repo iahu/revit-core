@@ -9,7 +9,7 @@ export interface CopyOptions extends SelectOptions {
   lockX?: boolean //纵向移动
   lockY?: boolean //横向移动
   showCompass?: boolean //是否显示角度
-  pixelRatio?: number
+  pixelRatio?: number//尺子比例
 }
 export const copy = (layer: Layer, config = {} as CopyOptions) => {
   const { showCompass = true, lockY = false, lockX = false, copyResult = true, pixelRatio, useSelectedNode } = config
@@ -33,7 +33,7 @@ export const copy = (layer: Layer, config = {} as CopyOptions) => {
       clone.y(clone.y() - y)
       clone.id(node.id() + '_clone')
 
-      if (!copyResult) {
+      if (copyResult) {
         layer.add(clone)
       }
 

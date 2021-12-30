@@ -1,6 +1,6 @@
 import Konva from 'konva'
 import Kroup from './kroup'
-import { observer } from './observer'
+import { attr } from './observer'
 
 export interface BricksConfig {
   width?: number

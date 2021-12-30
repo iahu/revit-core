@@ -1,32 +1,41 @@
 import Konva from 'konva'
+import { KonvaEventObject } from 'konva/lib/Node'
+import { Rect } from 'konva/lib/shapes/Rect'
 import { TextConfig } from 'konva/lib/shapes/Text'
 import { Stage } from 'konva/lib/Stage'
 import { fireChangeEvent } from './helper'
 import Kroup from './kroup'
-import { ChangedProp, Observed, observer } from './observer'
+import { ChangedProp, Observed, attr } from './observer'
 export interface EditableTextOptions extends Konva.ContainerConfig {
   text?: string
   fontSize?: number
   hideTextOnEditing?: boolean
   trigger?: keyof GlobalEventHandlersEventMap
-  editable?: boolean
   useScale?: boolean
   minWidth?: number
   minHeight?: number
-  editEnable?: boolean
+  /** 仅可读，即不可编辑 */
+  readonly?: boolean
+  /** 标识是否进入编辑状态 */
+  editable?: boolean
+  /** 是否允许空字符串 */
+  allowEmpty?: boolean
+  emptyMark?: string
 }
 
 export class EditableText extends Kroup implements Observed {
-  @observer<EditableText, 'text'>() text: string | undefined
-  @observer<EditableText, 'align'>() align: string | undefined
-  @observer<EditableText, 'minWidth'>() minWidth: number | undefined
-  @observer<EditableText, 'minHeight'>() minHeight: number | undefined
-  @observer<EditableText, 'editable'>() editable = true
-  @observer<EditableText, 'fontSize'>() fontSize = 12
-  @observer<EditableText, 'hideTextOnEditing'>() hideTextOnEditing = true
-  @observer<EditableText, 'trigger'>() trigger = 'dblclick' as keyof GlobalEventHandlersEventMap
-  @observer<EditableText, 'useScale'>() useScale = true
-  @observer<EditableText, 'editEnable'>() editEnable = false
+  @attr<EditableText, 'text'>() text: string | undefined
+  @attr<EditableText, 'align'>() align: string | undefined
+  @attr<EditableText, 'minWidth'>() minWidth: number | undefined
+  @attr<EditableText, 'minHeight'>() minHeight: number | undefined
+  @attr<EditableText, 'readonly'>() readonly = false
+  @attr<EditableText, 'fontSize'>() fontSize = 12
+  @attr<EditableText, 'hideTextOnEditing'>() hideTextOnEditing = true
+  @attr<EditableText, 'trigger'>() trigger = 'dblclick' as keyof GlobalEventHandlersEventMap
+  @attr<EditableText, 'useScale'>() useScale = true
+  @attr<EditableText, 'editable'>() editable = false
+  @attr<EditableText, 'allowEmpty'>() allowEmpty = false
+  @attr<EditableText, 'emptyMark'>() emptyMark = '-'
 
   constructor(options = {} as EditableTextOptions & TextConfig) {
     super(options)
@@ -36,6 +45,9 @@ export class EditableText extends Kroup implements Observed {
     if (this.trigger) {
       this.$text.on(this.trigger, this.handleEditor)
     }
+
+    this.$input.addEventListener('blur', this.handleBlur)
+    this.$input.addEventListener('keyup', this.handleKeyup)
   }
 
   propWillUpdate(prop: ChangedProp) {
@@ -52,41 +64,35 @@ export class EditableText extends Kroup implements Observed {
     }
   }
 
-  propDidUpdate(prop: ChangedProp) {
-    const { key, oldVal, newVal } = prop
-    if ('text' === key) {
-      fireChangeEvent(this, key, { oldVal, newVal })
-    } else if ('editEnable' === key) {
-      fireChangeEvent(this, key, { oldVal, newVal })
-    }
+  $text = new Konva.Text({ name: 'editable-text', fontSize: this.fontSize })
+  $input = document.createElement('input')
+  $background = new Rect({ name: 'editable-text-background' })
+
+  handleEditor = (e: KonvaEventObject<Event>) => {
+    e.cancelBubble = true
+    this.editable = true
   }
 
-  $text = new Konva.Text({ fontSize: this.fontSize })
-  $input = document.createElement('input')
+  handleBlur = (e: FocusEvent) => {
+    const target = e.target as HTMLInputElement
+    this.$text.visible(true)
+    this.$input.remove()
+    const { allowEmpty } = this
+    const oldVal = this.text
+    const newVal = target.value
 
-  handleEditor = () => {
-    this.editEnable = true
-
-    const handleBlur = (e: FocusEvent) => {
-      const target = e.target as HTMLInputElement
-      this.$text.visible(true)
-      this.$input.remove()
-      const oldVal = this.text
-      const newVal = target.value
-
-      if (oldVal !== newVal) {
-        this.text = newVal
-      }
-      this.editEnable = false
+    if (oldVal !== newVal && !(!newVal && !allowEmpty)) {
+      this.text = newVal
+      this.$text.text(newVal)
+      fireChangeEvent(this, 'text', { oldVal, newVal })
     }
-    this.$input.addEventListener('blur', handleBlur, { once: true })
-    const handleKeyup = (e: KeyboardEvent) => {
-      if (e.key === 'Enter') {
-        this.$input.blur()
-        this.$input.removeEventListener('keyup', handleKeyup)
-      }
+    this.editable = false
+  }
+
+  handleKeyup = (e: KeyboardEvent) => {
+    if (e.key === 'Enter') {
+      this.$input.blur()
     }
-    this.$input.addEventListener('keyup', handleKeyup)
   }
 
   getWidth() {
@@ -103,33 +109,50 @@ export class EditableText extends Kroup implements Observed {
     this.$input.value = text ?? ''
   }
 
-  update() {
-    const { hideTextOnEditing, editEnable, align, text, fontSize } = this
-    const stage = this.getStage()
-    const container = stage?.container()
-    if (editEnable && container) {
-      this.setInputStyle()
-      if (hideTextOnEditing) {
-        this.$text.visible(false)
+  propDidUpdate(prop: ChangedProp) {
+    const { key, oldVal, newVal } = prop
+    if ('editable' === key) {
+      if (this.readonly) {
+        return
       }
-      this.$input.value = text ?? ''
-      container.appendChild(this.$input)
-      this.$input.focus()
-    } else {
-      this.$text.visible(true)
-      this.$input.remove()
+      const { editable, hideTextOnEditing, text } = this
+      const stage = this.getStage()
+      const container = stage?.container()
+      if (editable && container) {
+        this.setInputStyle()
+        if (hideTextOnEditing) {
+          this.$text.visible(false)
+        }
+        this.$input.value = text ?? ''
+        container.appendChild(this.$input)
+        this.$input.focus()
+      } else if (!editable) {
+        this.$text.visible(true)
+        this.$input.remove()
+      }
+
+      fireChangeEvent(this, 'editable', { oldVal, newVal })
     }
-    this.$text.setAttrs({ align, text, fontSize })
+  }
+
+  update() {
+    const { align, text, emptyMark, fontSize, minWidth, minHeight } = this
+    const { width, height } = this.getAttrs()
+    const mergedWidth = minWidth ? Math.max(width ?? 0, minWidth) : width
+    const mergedHeight = minHeight ? Math.max(height ?? 0, minHeight) : height
+    this.$text.setAttrs({ align, text: text || emptyMark, fontSize, width: mergedWidth, height: mergedHeight })
+    this.$background.setAttrs({ width: mergedWidth, height: mergedHeight })
   }
 
   setInputStyle() {
     const rotation = this.getAbsoluteRotation()
-    const { x, y } = this.getClientRect()
-    let { width, height } = this.getClientRect()
+    let { x, y, width, height } = this.getClientRect()
     if (Math.abs(rotation) === 90) {
       const tmp = width
       width = height
       height = tmp
+      x = x - height / 2
+      y = y + width / 2 - height / 2
     }
     const { align, editable, useScale, minWidth, minHeight } = this
     if (!editable) {
@@ -168,6 +191,6 @@ export class EditableText extends Kroup implements Observed {
   }
 
   render() {
-    return [this.$text]
+    return [this.$background, this.$text]
   }
 }

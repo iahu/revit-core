@@ -2,7 +2,7 @@ import Konva from 'konva'
 import Cross from './cross'
 import { DEG_TO_RAD } from './helper'
 import Kroup from './kroup'
-import { Observed, observer } from './observer'
+import { Observed, attr } from './observer'
 
 export interface CompassConfig {
   /**
@@ -69,21 +69,21 @@ export default class Compass extends Kroup implements Observed, CompassConfig {
   xAxis: Konva.Line
   yAxis: Konva.Line
 
-  @observer<Compass, 'startPoint'>({ beforeSet: mapPoint }) startPoint = [0, 0]
-  @observer<Compass, 'endPoint'>({ beforeSet: mapPoint }) endPoint = [0, 0]
+  @attr<Compass, 'startPoint'>({ beforeSet: mapPoint }) startPoint = [0, 0]
+  @attr<Compass, 'endPoint'>({ beforeSet: mapPoint }) endPoint = [0, 0]
 
-  @observer<Compass, 'xAxisWidth'>() xAxisWidth = 300
+  @attr<Compass, 'xAxisWidth'>() xAxisWidth = 300
 
-  @observer<Compass, 'stroke'>() stroke = '#0099ff'
-  @observer<Compass, 'strokeWidth'>() strokeWidth = 1
+  @attr<Compass, 'stroke'>() stroke = '#0099ff'
+  @attr<Compass, 'strokeWidth'>() strokeWidth = 1
 
-  @observer<Compass, 'crossRadius'>() crossRadius = 1
-  @observer<Compass, 'compassRadius'>() compassRadius = 150
+  @attr<Compass, 'crossRadius'>() crossRadius = 1
+  @attr<Compass, 'compassRadius'>() compassRadius = 150
 
-  @observer<Compass, 'snapAngles'>() snapAngles = [0, 45, 90, 135, 180]
-  @observer<Compass, 'snapMaxAngle'>() snapMaxAngle = 1
+  @attr<Compass, 'snapAngles'>() snapAngles = [0, 45, 90, 135, 180]
+  @attr<Compass, 'snapMaxAngle'>() snapMaxAngle = 1
 
-  @observer<Compass, 'labelOffset'>() labelOffset = 14
+  @attr<Compass, 'labelOffset'>() labelOffset = 14
 
   constructor(config = {} as CompassConfig & Konva.ContainerConfig) {
     super(config)

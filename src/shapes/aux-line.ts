@@ -3,7 +3,7 @@ import { ContainerConfig } from 'konva/lib/Container'
 import { Vector2d } from 'konva/lib/types'
 import { vector2Point } from '../actions/helper'
 import Kroup from './kroup'
-import { observer } from './observer'
+import { attr } from './observer'
 
 export interface AuxLineOptions {
   stroke?: string
@@ -20,15 +20,15 @@ export interface AuxLineOptions {
 const defaultPoint = { x: 0, y: 0 }
 
 export class AuxLine extends Kroup implements AuxLineOptions {
-  @observer<AuxLine, 'stroke'>() stroke = '#3399ff'
-  @observer<AuxLine, 'strokeWidth'>() strokeWidth = 1
-  @observer<AuxLine, 'dash'>() dash = [3, 3]
-  @observer<AuxLine, 'startPoint'>() startPoint = defaultPoint
-  @observer<AuxLine, 'endPoint'>() endPoint = defaultPoint
-  @observer<AuxLine, 'label'>() label = ''
-  @observer<AuxLine, 'labelOffset'>() labelOffset = 6
-  @observer<AuxLine, 'direction'>() direction = 'x' as const
-  @observer<AuxLine, 'maxWidth'>() maxWidth: number | undefined
+  @attr<AuxLine, 'stroke'>() stroke = '#3399ff'
+  @attr<AuxLine, 'strokeWidth'>() strokeWidth = 1
+  @attr<AuxLine, 'dash'>() dash = [3, 3]
+  @attr<AuxLine, 'startPoint'>() startPoint = defaultPoint
+  @attr<AuxLine, 'endPoint'>() endPoint = defaultPoint
+  @attr<AuxLine, 'label'>() label = ''
+  @attr<AuxLine, 'labelOffset'>() labelOffset = 6
+  @attr<AuxLine, 'direction'>() direction = 'x' as const
+  @attr<AuxLine, 'maxWidth'>() maxWidth: number | undefined
 
   constructor(options = {} as AuxLineOptions & ContainerConfig) {
     super(options)

@@ -3,7 +3,7 @@ import { Vector2d } from 'konva/lib/types'
 import { AuxLine } from './aux-line'
 import Kroup from './kroup'
 import { LabelArc } from './label-arc'
-import { Observed, observer } from './observer'
+import { Observed, attr } from './observer'
 
 export interface AnglerOptions {
   stroke?: string
@@ -17,15 +17,15 @@ export interface AnglerOptions {
 }
 
 export class Angler extends Kroup implements Observed, AnglerOptions {
-  @observer<Angler, 'stroke'>() stroke = '#0099ff'
-  @observer<Angler, 'strokeWidth'>() strokeWidth = 1
+  @attr<Angler, 'stroke'>() stroke = '#0099ff'
+  @attr<Angler, 'strokeWidth'>() strokeWidth = 1
 
-  @observer<Angler, 'centerPoint'>() centerPoint: Vector2d
-  @observer<Angler, 'startPoint'>() startPoint: Vector2d
-  @observer<Angler, 'endPoint'>() endPoint: Vector2d
-  @observer<Angler, 'centerCircleVisible'>() centerCircleVisible: boolean
-  @observer<Angler, 'centerCircleRadius'>() centerCircleRadius: number
-  @observer<Angler, 'auxLineMaxWidth'>() auxLineMaxWidth: number | undefined
+  @attr<Angler, 'centerPoint'>() centerPoint: Vector2d
+  @attr<Angler, 'startPoint'>() startPoint: Vector2d
+  @attr<Angler, 'endPoint'>() endPoint: Vector2d
+  @attr<Angler, 'centerCircleVisible'>() centerCircleVisible: boolean
+  @attr<Angler, 'centerCircleRadius'>() centerCircleRadius: number
+  @attr<Angler, 'auxLineMaxWidth'>() auxLineMaxWidth: number | undefined
 
   /**
    * create elements

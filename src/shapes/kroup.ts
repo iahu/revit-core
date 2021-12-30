@@ -1,6 +1,6 @@
 import Konva from 'konva'
 import { ContainerConfig } from 'konva/lib/Container'
-import { ChangedProp, Observed, observer } from './observer'
+import { ChangedProp, Observed, attr } from './observer'
 
 const normalized = (result: (Konva.Group | Konva.Shape)[] | null) => {
   return result ? result.filter(v => !!v) : []
@@ -22,10 +22,10 @@ export interface KroupOptions extends ContainerConfig {
  * 回调中通过判断 `changedProp.key` 来实现
  */
 export default class Kroup extends Konva.Group implements Observed {
-  @observer<Kroup, 'stroke'>() stroke = '#333'
-  @observer<Kroup, 'strokeWidth'>() strokeWidth = 1
-  @observer<Kroup, 'shadowColor'>() shadowColor = ''
-  @observer<Kroup, 'shadowBlur'>() shadowBlur = 0
+  @attr<Kroup, 'stroke'>() stroke = '#333'
+  @attr<Kroup, 'strokeWidth'>() strokeWidth = 1
+  @attr<Kroup, 'shadowColor'>() shadowColor = ''
+  @attr<Kroup, 'shadowBlur'>() shadowBlur = 0
 
   getClassName() {
     return this.constructor.name
@@ -33,43 +33,30 @@ export default class Kroup extends Konva.Group implements Observed {
 
   constructor(config = {} as Konva.ContainerConfig) {
     super(config)
-    this.setAttrs(config)
-    this.className = this.getClassName()
 
+    this.attrs = new Proxy({} as Record<string, any>, {
+      set: (attrs, key: string, value) => {
+        const oldVal = attrs[key]
+        const hasRendered = this.__hasRendered
+        if (oldVal === value) {
+          return true
+        }
+
+        hasRendered && this.propWillUpdate({ key, oldVal, newVal: value })
+        attrs[key] = value // set value
+        this.__didUpdate()
+        hasRendered && this.propDidUpdate({ key, oldVal, newVal: value })
+        this._fireChangeEvent(key, oldVal, value)
+        return true
+      },
+    })
+
+    this.className = this.getClassName()
+    this.setAttrs(config)
     // lazy init
     this.updated.then(() => {
-      // if (!this.__hasRendered) {
-      //   this.setAttrs(config)
-      // }
       this.__render()
     })
-  }
-
-  setAttr(key: string, value: any, needUpdate = true) {
-    const oldVal = this.attrs[key]
-    if (oldVal === value) {
-      return this
-    }
-
-    if (this.__hasRendered) {
-      this.propWillUpdate({ key, oldVal, newVal: value })
-    }
-    super.setAttr(key, value)
-    if (needUpdate && this.__hasRendered) {
-      this.__didUpdate()
-      this.propDidUpdate({ key, oldVal, newVal: value })
-    }
-    return this
-  }
-
-  setAttrs(attrs = {} as Record<string, any>, needUpdate = true) {
-    Object.keys(attrs).forEach(key => {
-      this.setAttr(key, attrs[key], false)
-    })
-    if (needUpdate) {
-      this.__didUpdate()
-    }
-    return this
   }
 
   /**
@@ -170,9 +157,22 @@ export default class Kroup extends Konva.Group implements Observed {
   }
 
   private __hasRendered = false
-  firstRender() {
+  private __firstRender() {
+    const { attrs } = this
+    // 所有属性都注册后，再执行回调
+    // 否则回调里可能取不到某些属性
+    Object.keys(attrs).forEach(key => {
+      const value = attrs[key]
+      this.propWillUpdate({ key, oldVal: undefined, newVal: value })
+      this.propDidUpdate({ key, oldVal: undefined, newVal: value })
+    })
     this.update()
-    // first render callback
+    this.firstRender()
+  }
+
+  // first render callback
+  firstRender() {
+    // empty function
   }
 
   private __render() {
@@ -186,7 +186,7 @@ export default class Kroup extends Konva.Group implements Observed {
     }
     if (!this.__hasRendered) {
       this.__hasRendered = true
-      this.firstRender()
+      this.__firstRender()
     }
   }
 
