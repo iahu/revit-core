@@ -1,7 +1,7 @@
 import Konva from 'konva'
 import { SELECTED_CLASSNAME } from '@actions/helper'
 import { EditableText } from './editable-text'
-import Kroup from './kroup'
+import Komponent from './komponent'
 import { Observed, attr } from './observer'
 import { Pointer } from './pointer'
 
@@ -11,7 +11,7 @@ export interface BasePointOptions {
   axisWidth?: number
 }
 
-export class BasePoint extends Kroup implements Observed, BasePointOptions {
+export class BasePoint extends Komponent implements Observed, BasePointOptions {
   @attr<BasePoint, 'radius'>() radius = 20
   @attr<BasePoint, 'axisWidth'>() axisWidth = 1000
 

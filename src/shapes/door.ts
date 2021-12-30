@@ -2,7 +2,7 @@ import { HIGHLIGHT_CLASSNAME, SELECTED_CLASSNAME } from '@actions/helper'
 import Konva from 'konva'
 import { ContainerConfig } from 'konva/lib/Container'
 import { DEG_TO_RAD } from './helper'
-import Kroup from './kroup'
+import Komponent from './komponent'
 import { Observed, attr } from './observer'
 
 export interface DoorOptions {
@@ -24,7 +24,7 @@ export interface DoorOptions {
   openAngle?: number
 }
 
-export class Door extends Kroup implements Observed, DoorOptions {
+export class Door extends Komponent implements Observed, DoorOptions {
   @attr<Door, 'panelWidth'>() panelWidth = 40
   @attr<Door, 'panelStrokeWidth'>() panelStrokeWidth = 1
   @attr<Door, 'panelThickness'>() panelThickness = 2

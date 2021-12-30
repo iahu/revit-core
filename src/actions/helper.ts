@@ -1,4 +1,4 @@
-import Kroup from '@shapes/kroup'
+import Komponent from '@shapes/komponent'
 import Bluebird from 'bluebird'
 import Konva from 'konva'
 import { Container } from 'konva/lib/Container'
@@ -28,7 +28,7 @@ export const bindCallback = <T extends FunctionWithCallback>(fn: T) => {
 }
 
 export const isShape = (target: Konva.Node): target is Konva.Shape => target instanceof Konva.Shape
-export const isKroup = (target: Konva.Node): target is Kroup => target instanceof Kroup
+export const isKomponent = (target: Konva.Node): target is Komponent => target instanceof Komponent
 export const isStage = (target: Konva.Node): target is Konva.Stage => target instanceof Konva.Stage
 export const isLayer = (target: Konva.Node): target is Konva.Layer => target instanceof Konva.Layer
 export const isTextShape = (shape: Konva.Shape): shape is Konva.Text => shape instanceof Konva.Text
@@ -152,7 +152,7 @@ export const notDraggable = <T extends Konva.Node>(t: T) => {
 export const closestSelectable = <T extends Konva.Node>(target: T): T | Group | null => {
   return isSelectable(target)
     ? target
-    : target.parent instanceof Kroup && isSelectable(target.parent as Container)
+    : target.parent instanceof Komponent && isSelectable(target.parent as Container)
     ? target.parent
     : null
 }

@@ -1,5 +1,5 @@
 import Konva from 'konva'
-import Kroup from './kroup'
+import Komponent from './komponent'
 import { attr } from './observer'
 
 export interface BricksConfig {
@@ -8,7 +8,7 @@ export interface BricksConfig {
   side?: 'inner' | 'outer'
 }
 
-export class Bricks extends Kroup {
+export class Bricks extends Komponent {
   wall = new Konva.Rect({ width: this.width(), height: this.height() })
   bricks = new Konva.Rect({ width: this.width(), height: this.height() })
 

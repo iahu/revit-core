@@ -2,7 +2,7 @@ import Konva from 'konva'
 import { Vector2d } from 'konva/lib/types'
 import { vector2Point } from '../actions/helper'
 import { getScalar, toDeg180, toDeg360 } from './helper'
-import Kroup from './kroup'
+import Komponent from './komponent'
 import { Observed, attr } from './observer'
 
 export interface LabelArcOptions {
@@ -14,7 +14,7 @@ export interface LabelArcOptions {
   radius?: number
 }
 
-export class LabelArc extends Kroup implements Observed, LabelArcOptions {
+export class LabelArc extends Komponent implements Observed, LabelArcOptions {
   @attr<LabelArc, 'stroke'>() stroke = '#3399ff'
   @attr<LabelArc, 'strokeWidth'>() strokeWidth = 1
 

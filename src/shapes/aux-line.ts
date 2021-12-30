@@ -2,7 +2,7 @@ import Konva from 'konva'
 import { ContainerConfig } from 'konva/lib/Container'
 import { Vector2d } from 'konva/lib/types'
 import { vector2Point } from '../actions/helper'
-import Kroup from './kroup'
+import Komponent from './komponent'
 import { attr } from './observer'
 
 export interface AuxLineOptions {
@@ -19,7 +19,7 @@ export interface AuxLineOptions {
 
 const defaultPoint = { x: 0, y: 0 }
 
-export class AuxLine extends Kroup implements AuxLineOptions {
+export class AuxLine extends Komponent implements AuxLineOptions {
   @attr<AuxLine, 'stroke'>() stroke = '#3399ff'
   @attr<AuxLine, 'strokeWidth'>() strokeWidth = 1
   @attr<AuxLine, 'dash'>() dash = [3, 3]

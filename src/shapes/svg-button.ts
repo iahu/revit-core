@@ -1,5 +1,5 @@
 import Konva from 'konva'
-import Kroup from './kroup'
+import Komponent from './komponent'
 import { Observed, attr } from './observer'
 import { ContainerConfig } from 'konva/lib/Container'
 export interface SvgButtonOptions {
@@ -16,7 +16,7 @@ export interface SvgButtonOptions {
   dash?: number[]
   mouseType?: 'over' | 'down' | 'normal'
 }
-export class SvgButton extends Kroup implements Observed, SvgButtonOptions {
+export class SvgButton extends Komponent implements Observed, SvgButtonOptions {
   @attr<SvgButton, 'stroke'>() stroke = 'rgb(255,48,48)'
   @attr<SvgButton, 'fill'>() fill = 'rgba(0,0,0,0.1)'
   @attr<SvgButton, 'strokeWidth'>() strokeWidth = 2

@@ -2,7 +2,7 @@ import Konva from 'konva'
 import { ContainerConfig } from 'konva/lib/Container'
 import Cross from './cross'
 import { EditableText } from './editable-text'
-import Kroup from './kroup'
+import Komponent from './komponent'
 import { Observed, attr } from './observer'
 
 export interface RulerConfig {
@@ -37,7 +37,7 @@ export interface RulerConfig {
   pixelRatio?: number
 }
 
-export default class Ruler extends Kroup implements Observed {
+export default class Ruler extends Komponent implements Observed {
   ruler = new Konva.Line({ name: 'ruler' })
   rulerLabel = new EditableText({ name: 'ruler-label', fontSize: 12, align: 'center' })
   startCross = new Cross()

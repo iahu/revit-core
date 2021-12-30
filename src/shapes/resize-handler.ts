@@ -2,7 +2,7 @@ import { Maybe } from '@actions/helper'
 import { ContainerConfig } from 'konva/lib/Container'
 import { Circle } from 'konva/lib/shapes/Circle'
 import { Vector2d } from 'konva/lib/types'
-import Kroup from './kroup'
+import Komponent from './komponent'
 import { ChangedProp, attr } from './observer'
 
 export interface ResizeHandlerOptions {
@@ -14,7 +14,7 @@ export interface ResizeHandlerOptions {
   lockY?: boolean
 }
 
-export class ResizeHandler extends Kroup {
+export class ResizeHandler extends Komponent {
   @attr<ResizeHandler, 'stroke'>() stroke: string
   @attr<ResizeHandler, 'fill'>() fill: string | CanvasGradient
   @attr<ResizeHandler, 'strokeWidth'>() strokeWidth: number

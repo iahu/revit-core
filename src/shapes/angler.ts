@@ -1,7 +1,7 @@
 import { Circle } from 'konva/lib/shapes/Circle'
 import { Vector2d } from 'konva/lib/types'
 import { AuxLine } from './aux-line'
-import Kroup from './kroup'
+import Komponent from './komponent'
 import { LabelArc } from './label-arc'
 import { Observed, attr } from './observer'
 
@@ -16,7 +16,7 @@ export interface AnglerOptions {
   auxLineMaxWidth?: number
 }
 
-export class Angler extends Kroup implements Observed, AnglerOptions {
+export class Angler extends Komponent implements Observed, AnglerOptions {
   @attr<Angler, 'stroke'>() stroke = '#0099ff'
   @attr<Angler, 'strokeWidth'>() strokeWidth = 1
 

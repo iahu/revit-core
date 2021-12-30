@@ -6,7 +6,7 @@ const normalized = (result: (Konva.Group | Konva.Shape)[] | null) => {
   return result ? result.filter(v => !!v) : []
 }
 
-export interface KroupOptions extends ContainerConfig {
+export interface KomponentOptions extends ContainerConfig {
   stroke?: string | CanvasGradient
   strokeWidth?: number
   shadowColor?: string | CanvasGradient
@@ -14,18 +14,19 @@ export interface KroupOptions extends ContainerConfig {
 }
 
 /**
- * Konva.Group 的封装，生命周期 render -> propWillUpdate -> update
- *
- * 如果有响应式参数请用 @observer() 装饰器添加。
+ * Konva.Group 的封装
+ * 通过监听 attrs 对象，触发相应回调：
+ *  render -> propWillUpdate -> update
+ * 如果有响应式参数请用 @attr() 装饰器添加。
  *
  * 如果有精确控制更新的需要可以在 `propWillUpdate(changedProp: ChangedProp)`
  * 回调中通过判断 `changedProp.key` 来实现
  */
-export default class Kroup extends Konva.Group implements Observed {
-  @attr<Kroup, 'stroke'>() stroke = '#333'
-  @attr<Kroup, 'strokeWidth'>() strokeWidth = 1
-  @attr<Kroup, 'shadowColor'>() shadowColor = ''
-  @attr<Kroup, 'shadowBlur'>() shadowBlur = 0
+export default class Komponent extends Konva.Group implements Observed {
+  @attr<Komponent, 'stroke'>() stroke = '#333'
+  @attr<Komponent, 'strokeWidth'>() strokeWidth = 1
+  @attr<Komponent, 'shadowColor'>() shadowColor = ''
+  @attr<Komponent, 'shadowBlur'>() shadowBlur = 0
 
   getClassName() {
     return this.constructor.name
@@ -34,7 +35,7 @@ export default class Kroup extends Konva.Group implements Observed {
   constructor(config = {} as Konva.ContainerConfig) {
     super(config)
 
-    this.attrs = new Proxy({} as Record<string, any>, {
+    this.attrs = new Proxy({ ...this.attrs } as Record<string, any>, {
       set: (attrs, key: string, value) => {
         const oldVal = attrs[key]
         const hasRendered = this.__hasRendered

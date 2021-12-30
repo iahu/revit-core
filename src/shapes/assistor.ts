@@ -1,6 +1,6 @@
 import Konva from 'konva'
 import Compass from './compass'
-import Kroup from './kroup'
+import Komponent from './komponent'
 import { attr } from './observer'
 import Ruler from './ruler'
 
@@ -51,7 +51,7 @@ export interface AssistorConfig {
 
 const mapPoint = (point: number[], oldPoint: number[]) => point.concat(oldPoint.slice(point.length))
 
-export default class Assistor extends Kroup {
+export default class Assistor extends Komponent {
   ruler: Ruler
 
   compass: Compass

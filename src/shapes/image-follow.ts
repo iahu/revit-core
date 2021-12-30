@@ -1,7 +1,7 @@
 import Konva from 'konva'
 import { ContainerConfig } from 'konva/lib/Container'
 import { listenOn } from '../actions/helper'
-import Kroup from './kroup'
+import Komponent from './komponent'
 import { attr, Observed } from './observer'
 
 export interface ImageFollowOptions {
@@ -10,7 +10,7 @@ export interface ImageFollowOptions {
 }
 //图片1跟随鼠标移动，点击后，停止移动，显示图片2
 //type: imageFollow
-export class ImageFollow extends Kroup implements Observed, ImageFollowOptions {
+export class ImageFollow extends Komponent implements Observed, ImageFollowOptions {
   @attr<ImageFollow, 'img_follow'>() img_follow = ''
   @attr<ImageFollow, 'img_down'>() img_down = ''
   _image_follow = new Image()

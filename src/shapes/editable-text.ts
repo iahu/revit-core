@@ -4,7 +4,7 @@ import { Rect } from 'konva/lib/shapes/Rect'
 import { TextConfig } from 'konva/lib/shapes/Text'
 import { Stage } from 'konva/lib/Stage'
 import { fireChangeEvent } from './helper'
-import Kroup from './kroup'
+import Komponent from './komponent'
 import { ChangedProp, Observed, attr } from './observer'
 export interface EditableTextOptions extends Konva.ContainerConfig {
   text?: string
@@ -23,7 +23,7 @@ export interface EditableTextOptions extends Konva.ContainerConfig {
   emptyMark?: string
 }
 
-export class EditableText extends Kroup implements Observed {
+export class EditableText extends Komponent implements Observed {
   @attr<EditableText, 'text'>() text: string | undefined
   @attr<EditableText, 'align'>() align: string | undefined
   @attr<EditableText, 'minWidth'>() minWidth: number | undefined

@@ -6,7 +6,7 @@ import { EditableText } from './editable-text'
 import { Elevation } from './elevation'
 import { closest } from './helper'
 import { createShape } from './index'
-import Kroup from './kroup'
+import Komponent from './komponent'
 import { attr, ChangedProp, KonvaChangeEvent, Observed } from './observer'
 import Ruler from './ruler'
 
@@ -36,7 +36,7 @@ export interface FloorLevelsOptions {
 
 const identity: Formatter = n => `${Number(n).toFixed(2)}`
 
-export class FloorLevels extends Kroup implements Observed {
+export class FloorLevels extends Komponent implements Observed {
   @attr<FloorLevels, 'floorLevels'>() floorLevels = [] as LevelOptions[]
   @attr<FloorLevels, 'formatter'>() formatter: Formatter
   @attr<FloorLevels, 'editable'>() editable = false

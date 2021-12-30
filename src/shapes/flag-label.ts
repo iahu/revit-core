@@ -1,6 +1,6 @@
 import { EditableText } from './editable-text'
 import { Flag } from './flag'
-import Kroup from './kroup'
+import Komponent from './komponent'
 import { Observed, attr } from './observer'
 
 export interface FlagLabelOptions {
@@ -9,7 +9,7 @@ export interface FlagLabelOptions {
   title?: string
 }
 
-export class FlagLabel extends Kroup implements Observed, FlagLabelOptions {
+export class FlagLabel extends Komponent implements Observed, FlagLabelOptions {
   @attr<FlagLabel, 'label'>() label = '±0.000'
   @attr<FlagLabel, 'title'>() title = '标高'
 

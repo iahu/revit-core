@@ -1,7 +1,7 @@
 import Konva from 'konva'
 import Cross from './cross'
 import { DEG_TO_RAD } from './helper'
-import Kroup from './kroup'
+import Komponent from './komponent'
 import { Observed, attr } from './observer'
 
 export interface CompassConfig {
@@ -61,7 +61,7 @@ const getSnapAngle = (snapAngles: number[], snapMaxAngle: number, angle: number)
   }
 }
 
-export default class Compass extends Kroup implements Observed, CompassConfig {
+export default class Compass extends Komponent implements Observed, CompassConfig {
   compass: Konva.Arc
   compassLabel: Konva.Text
   compassStartCross: Cross

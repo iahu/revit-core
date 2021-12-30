@@ -1,12 +1,12 @@
 import { isString } from '@actions/helper'
-import Kroup from '@shapes/kroup'
+import Komponent from '@shapes/komponent'
 import { Container } from 'konva/lib/Container'
 import { Group } from 'konva/lib/Group'
 import { Layer } from 'konva/lib/Layer'
 import { Node } from 'konva/lib/Node'
 import { Stage } from 'konva/lib/Stage'
 
-export type ContainerTypes = Stage | Layer | Group | Kroup | Container
+export type ContainerTypes = Stage | Layer | Group | Komponent | Container
 
 const matchAttribute = (node: Node, key: string, value: any, op: string) => {
   const property = node.getAttr(key)

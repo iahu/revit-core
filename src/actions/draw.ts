@@ -1,5 +1,5 @@
 import { createShape, Entity, EntityType } from '@shapes/index'
-import Kroup from '@shapes/kroup'
+import Komponent from '@shapes/komponent'
 import Bluebird from 'bluebird'
 import { Layer } from 'konva/lib/Layer'
 import { Shape } from 'konva/lib/Shape'
@@ -22,13 +22,13 @@ export interface DrawOptions {
   updateAttribute?: 'position' | 'size'
   lockX?: boolean
   lockY?: boolean
-  onUpdate?: (shape: Shape | Kroup, position: Vector2d) => void
+  onUpdate?: (shape: Shape | Komponent, position: Vector2d) => void
   /** 确认事件名或自动确认延时时长 */
   confirmEvent?: keyof GlobalEventHandlersEventMap | number
 }
 
 export interface UpdateArgs {
-  shape: Shape | Kroup
+  shape: Shape | Komponent
   startPosition: Vector2d
   endPosition: Vector2d
 }

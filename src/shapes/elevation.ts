@@ -1,11 +1,11 @@
-import { HIGHLIGHT_CLASSNAME } from '@actions/helper'
+import { SELECTED_CLASSNAME } from '@actions/helper'
 import { ContainerConfig } from 'konva/lib/Container'
 import { KonvaEventObject } from 'konva/lib/Node'
 import { FlagLabel } from './flag-label'
 import { fireChangeEvent } from './helper'
-import Kroup from './kroup'
+import Komponent from './komponent'
 import { Level } from './level'
-import { ChangedProp, Observed, attr } from './observer'
+import { attr, ChangedProp, Observed } from './observer'
 import { ResizeHandler } from './resize-handler'
 
 export interface ElevationOptions {
@@ -17,7 +17,7 @@ export interface ElevationOptions {
   dotRadius?: number
 }
 
-export class Elevation extends Kroup implements Observed {
+export class Elevation extends Komponent implements Observed {
   @attr<Elevation, 'flagWidth'>() flagWidth = 80
   @attr<Elevation, 'flagHeight'>() flagHeight = 10
   @attr<Elevation, 'title'>() title: string | undefined
@@ -98,7 +98,7 @@ export class Elevation extends Kroup implements Observed {
   update() {
     const { flagWidth, flagHeight, title, label = '±0.00', resizable } = this
     const { width, stroke, strokeWidth } = this.getAttrs()
-    const dotVisible = this.hasName(HIGHLIGHT_CLASSNAME) || resizable
+    const dotVisible = this.hasName(SELECTED_CLASSNAME) || resizable
     this.$level.setAttrs({ width, stroke, strokeWidth })
     this.$flagLabel.setAttrs({ x: width, width: flagWidth, height: flagHeight, stroke, strokeWidth, title, label })
 

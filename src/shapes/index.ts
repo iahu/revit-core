@@ -8,7 +8,7 @@ import { Flag, FlagOptions } from './flag'
 import { FlagLabel, FlagLabelOptions } from './flag-label'
 import { FloorLevels, FloorLevelsOptions } from './floor-levels'
 import { ImageFollow } from './image-follow'
-import Kroup from './kroup'
+import Komponent from './komponent'
 import { Level, LevelOptions } from './level'
 import { SelectBox } from './select-box'
 import { SvgButton } from './svg-button'
@@ -105,14 +105,14 @@ export interface Layer extends Konva.LayerConfig {
   entities: Array<Entity>
 }
 
-export type MaybeShapeOrKroup = Konva.Shape | Kroup | undefined
+export type MaybeShapeOrKomponent = Konva.Shape | Komponent | undefined
 
 /**
  * 创建图形的工厂函数
  */
-export function createShape(entity: Entity): MaybeShapeOrKroup
-export function createShape(type: EntityType, entity?: Partial<Entity>): MaybeShapeOrKroup
-export function createShape(typeOrEntity: EntityType | Entity, entityOrNot?: Partial<Entity>): MaybeShapeOrKroup {
+export function createShape(entity: Entity): MaybeShapeOrKomponent
+export function createShape(type: EntityType, entity?: Partial<Entity>): MaybeShapeOrKomponent
+export function createShape(typeOrEntity: EntityType | Entity, entityOrNot?: Partial<Entity>): MaybeShapeOrKomponent {
   let type = typeOrEntity
   let entity = entityOrNot
   if (typeof typeOrEntity !== 'string') {
@@ -127,7 +127,7 @@ export function createShape(typeOrEntity: EntityType | Entity, entityOrNot?: Par
     ...entity,
   }
 
-  let shape: MaybeShapeOrKroup
+  let shape: MaybeShapeOrKomponent
   if (type === 'imgUrl') {
     const image = new Image()
     image.src = entity?.imgUrl

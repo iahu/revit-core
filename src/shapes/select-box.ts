@@ -1,5 +1,5 @@
 import Konva from 'konva'
-import Kroup from './kroup'
+import Komponent from './komponent'
 import { Observed, attr } from './observer'
 import { getTransformer } from '../helpers/transfomer'
 import { ContainerConfig } from 'konva/lib/Container'
@@ -13,7 +13,7 @@ export interface SelectBoxOption {
   group?: boolean //是否是群组，群组没有中间那一条线
 }
 /**按 enter 键后，物体周围显示的边框 */
-export class SelectBox extends Kroup implements Observed, SelectBoxOption {
+export class SelectBox extends Komponent implements Observed, SelectBoxOption {
   @attr<SelectBox, 'selector'>() selector = ''
   @attr<SelectBox, 'stroke'>() stroke = '#0099ff'
   @attr<SelectBox, 'strokeWidth'>() strokeWidth = 1

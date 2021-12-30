@@ -2,7 +2,7 @@ import Bluebird from 'bluebird'
 import { Layer } from 'konva/lib/Layer'
 import { Stage } from 'konva/lib/Stage'
 import { Vector2d } from 'konva/lib/types'
-import { closestSelectable, isKroup, isShape, listenOn, ShapeOrGroup } from './helper'
+import { closestSelectable, isKomponent, isShape, listenOn, ShapeOrGroup } from './helper'
 
 export interface PickOptions {
   onlySelectable?: boolean
@@ -20,7 +20,7 @@ export const pick = (container: Layer, options?: PickOptions) => {
     const stop = listenOn(stage, 'click', event => {
       event.evt.preventDefault()
       const { target } = event
-      const stageOrShape = ignoreStage ? (isShape(target) || isKroup(target) ? target : null) : target
+      const stageOrShape = ignoreStage ? (isShape(target) || isKomponent(target) ? target : null) : target
       const selectableNode = stageOrShape && onlySelectable ? closestSelectable(stageOrShape) : stageOrShape
       // const closestTarget = isShape(target) || isKroup(target) ? closestSelectable(target) : null
       if (selectableNode) {
