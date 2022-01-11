@@ -1,3 +1,5 @@
+import { closest } from '@shapes/helper'
+import { ShapeOrKomponent } from '@shapes/index'
 import Komponent from '@shapes/komponent'
 import Bluebird from 'bluebird'
 import Konva from 'konva'
@@ -27,11 +29,11 @@ export const bindCallback = <T extends FunctionWithCallback>(fn: T) => {
     })
 }
 
-export const isShape = (target: Konva.Node): target is Konva.Shape => target instanceof Konva.Shape
-export const isKomponent = (target: Konva.Node): target is Komponent => target instanceof Komponent
-export const isStage = (target: Konva.Node): target is Konva.Stage => target instanceof Konva.Stage
-export const isLayer = (target: Konva.Node): target is Konva.Layer => target instanceof Konva.Layer
-export const isTextShape = (shape: Konva.Shape): shape is Konva.Text => shape instanceof Konva.Text
+export const isShape = (target: Maybe<Konva.Node>): target is Konva.Shape => target instanceof Konva.Shape
+export const isKomponent = (target: Maybe<Konva.Node>): target is Komponent => target instanceof Komponent
+export const isStage = (target: Maybe<Konva.Node>): target is Konva.Stage => target instanceof Konva.Stage
+export const isLayer = (target: Maybe<Konva.Node>): target is Konva.Layer => target instanceof Konva.Layer
+export const isTextShape = (shape: Maybe<Konva.Shape>): shape is Konva.Text => shape instanceof Konva.Text
 export const toTarget = <T>(event: Konva.KonvaEventObject<T>) => event.target
 // export const filter = <T>(fn: (value: T) => boolean, value: T) => (fn(value) ? value : new Error('unexpected'))
 
@@ -123,8 +125,11 @@ export const usePoinerPosition = (stageOrLayer: Stage | Layer | Shape) =>
 
 export const vector2Point = (vector: Vector2d) => [vector?.x ?? 0, vector?.y ?? 0]
 
+const dev = process.env.NODE_ENV === 'development'
 export const logger = <T>(v: T) => {
-  console.log(v)
+  if (dev) {
+    console.log(v)
+  }
   return v
 }
 
@@ -149,12 +154,23 @@ export const notDraggable = <T extends Konva.Node>(t: T) => {
   return t.draggable() ? Promise.reject(new Error('draggable')) : Promise.resolve(t)
 }
 
-export const closestSelectable = <T extends Konva.Node>(target: T): T | Group | null => {
-  return isSelectable(target)
-    ? target
-    : target.parent instanceof Komponent && isSelectable(target.parent as Container)
-    ? target.parent
-    : null
+export const closestSelectable = <T extends Konva.Node>(target: T): Maybe<ShapeOrKomponent> => {
+  if (isSelectable(target)) {
+    return target as unknown as ShapeOrKomponent
+  }
+  const { parent } = target
+  if (parent) {
+    return closestSelectable(parent)
+  }
+  return null
+}
+
+/**
+ * 优先检查是否为 Kompnent，否则检查是否为 Shape
+ */
+export const getKomponentOrShape = <T extends Konva.Node>(target: T): T extends Shape ? ShapeOrKomponent : null => {
+  const selectableNode = closestSelectable(target)
+  return (isShape(selectableNode) ? selectableNode : null) as any
 }
 
 export type ShapeOrGroup = Group | Shape

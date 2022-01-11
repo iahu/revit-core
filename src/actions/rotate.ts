@@ -8,11 +8,12 @@ import { findSelected, getCenterPoint, listenOn, ShapeOrGroup, usePoinerPosition
 import { kadInput, mouseInput } from './input'
 import { pointAt } from './pick'
 import { setTitle } from './set-title'
+import { ShapeOrKomponent } from '@shapes/index'
 
 export interface RotateOptions {
   name?: string
   /** 暂时只做一个元素 */
-  node?: ShapeOrGroup
+  node?: ShapeOrKomponent
   angle?: number
   origin?: 'center' | 'pick' | Vector2d
   /** 复制 */

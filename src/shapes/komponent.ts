@@ -1,16 +1,22 @@
+import { ShapeOrGroup } from '@actions/helper'
 import Konva from 'konva'
 import { ContainerConfig } from 'konva/lib/Container'
-import { ChangedProp, Observed, attr } from './observer'
+import { Shape } from 'konva/lib/Shape'
+import { attr, ChangedProp, observe, Observed } from './observer'
+
+export type ShapeOrKomponent = Shape | Komponent
 
 const normalized = (result: (Konva.Group | Konva.Shape)[] | null) => {
   return result ? result.filter(v => !!v) : []
 }
 
-export interface KomponentOptions extends ContainerConfig {
+export interface KomponentOptions {
   stroke?: string | CanvasGradient
   strokeWidth?: number
   shadowColor?: string | CanvasGradient
   shadowBlur?: number
+  selected?: boolean
+  highlighted?: boolean
 }
 
 /**
@@ -22,39 +28,26 @@ export interface KomponentOptions extends ContainerConfig {
  * 如果有精确控制更新的需要可以在 `propWillUpdate(changedProp: ChangedProp)`
  * 回调中通过判断 `changedProp.key` 来实现
  */
-export default class Komponent extends Konva.Group implements Observed {
+@observe
+export default class Komponent extends Konva.Group implements Observed, KomponentOptions {
   @attr<Komponent, 'stroke'>() stroke = '#333'
   @attr<Komponent, 'strokeWidth'>() strokeWidth = 1
+  @attr<Komponent, 'hitStrokeWidth'>() hitStrokeWidth = 3
   @attr<Komponent, 'shadowColor'>() shadowColor = ''
   @attr<Komponent, 'shadowBlur'>() shadowBlur = 0
+  @attr<Komponent, 'selected'>() selected = false
+  @attr<Komponent, 'highlighted'>() highlighted = false
 
   getClassName() {
     return this.constructor.name
   }
 
-  constructor(config = {} as Konva.ContainerConfig) {
+  constructor(config?: KomponentOptions & ContainerConfig) {
     super(config)
 
-    this.attrs = new Proxy({ ...this.attrs } as Record<string, any>, {
-      set: (attrs, key: string, value) => {
-        const oldVal = attrs[key]
-        const hasRendered = this.__hasRendered
-        if (oldVal === value) {
-          return true
-        }
-
-        hasRendered && this.propWillUpdate({ key, oldVal, newVal: value })
-        attrs[key] = value // set value
-        this.__didUpdate()
-        hasRendered && this.propDidUpdate({ key, oldVal, newVal: value })
-        this._fireChangeEvent(key, oldVal, value)
-        return true
-      },
-    })
-
     this.className = this.getClassName()
+
     this.setAttrs(config)
-    // lazy init
     this.updated.then(() => {
       this.__render()
     })
@@ -144,7 +137,10 @@ export default class Komponent extends Konva.Group implements Observed {
    * 移除所有子元素
    */
   removeAllChildren() {
-    this.children?.forEach(node => node.remove())
+    this.children?.forEach(node => {
+      node.remove()
+      node.parent = null
+    })
     this.children = []
   }
 
@@ -153,8 +149,8 @@ export default class Komponent extends Konva.Group implements Observed {
    * 数组里的元素将自动添加到当前 Group 里。
    * 注意：render 是一次性的，且数组里后一元素将渲染到前一个的上面
    */
-  render(): (Konva.Group | Konva.Shape)[] | null {
-    return [] as (Konva.Group | Konva.Shape)[]
+  render(): ShapeOrGroup[] | null {
+    return null
   }
 
   private __hasRendered = false
@@ -191,7 +187,26 @@ export default class Komponent extends Konva.Group implements Observed {
     }
   }
 
-  clone(attrs: any) {
+  /**
+   * 如果某元素的 parent 指向本元素，而实际不是本元素的子元素
+   * 默认的 `add` 方法会跳过此元素
+   */
+  add(...children: ShapeOrGroup[]) {
+    const _children = this.children ?? []
+    children.forEach(child => {
+      const parent = child.parent as unknown as ShapeOrGroup
+      if (parent === this && !_children.includes(child)) {
+        child.parent = null
+      }
+    })
+
+    return super.add(...children)
+  }
+
+  /**
+   * Node.clone 会重复 Container 的所有子元素
+   */
+  clone(attrs?: any) {
     const clone = super.clone(attrs)
 
     clone.removeAllChildren()

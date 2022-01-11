@@ -12,9 +12,14 @@ export class Flag extends Konva.Shape {
   @attr<Flag, 'flipX'>() flipX = false
   @attr<Flag, 'flipY'>() flipY = false
 
+  getClassName() {
+    return this.constructor.name
+  }
+
   constructor(options?: FlagOptions) {
     super(options)
 
+    this.className = this.getClassName()
     this.setAttrs({ width: 80, height: 10, strokeWidth: 1, hitStrokeWidth: 4, ...options })
   }
 
@@ -33,7 +38,6 @@ export class Flag extends Konva.Shape {
 
     ctx.lineTo(xSign * width, offsetY)
 
-    ctx.stroke()
     ctx.fillStrokeShape(this)
   }
 }

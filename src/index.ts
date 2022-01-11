@@ -1,18 +1,18 @@
 import { KAD_ACTION_NS, SELECTED_CLASSNAME } from '@actions/helper'
+import { onEsc } from '@actions/input'
+import { ContainerTypes, query } from '@helpers/query'
 import Bluebird from 'bluebird'
 import Konva from 'konva'
 import * as actions from './actions'
+import type { ShapeOrGroup } from './actions/helper'
 import { getBackgroundLayer } from './helpers/background'
 import { getDraftLayer } from './helpers/draft'
 import { getSelectionRect } from './helpers/selection-rect'
 import { getTransformer } from './helpers/transfomer'
 import { createShape, Layer } from './shapes'
-import type { ShapeOrGroup } from './actions/helper'
-import { ContainerTypes, query } from '@helpers/query'
-import { Container } from 'konva/lib/Container'
 
-export type { ShapeOrGroup } from './actions/helper'
 export type { Actions } from './actions'
+export type { ShapeOrGroup } from './actions/helper'
 
 // cancellable
 Bluebird.config({ cancellation: true })
@@ -80,6 +80,7 @@ export default class Kad {
     this.renderToKonva()
     // 默认命令
     this.execute('select')
+    onEsc().then(this.cancelCurrentAction.bind(this))
   }
 
   private createStage() {

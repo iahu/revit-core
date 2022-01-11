@@ -1,8 +1,7 @@
-import { createShape, Entity, EntityType } from '@shapes/index'
-import Komponent from '@shapes/komponent'
+import { createShape, Entity, EntityType, ShapeOrKomponent } from '@shapes/index'
 import Bluebird from 'bluebird'
+import { ShapeOrGroup } from 'index'
 import { Layer } from 'konva/lib/Layer'
-import { Shape } from 'konva/lib/Shape'
 import { Vector2d } from 'konva/lib/types'
 import { delay, listenOn, useEventTarget, usePoinerPosition } from './helper'
 import { mouseInput } from './input'
@@ -22,13 +21,13 @@ export interface DrawOptions {
   updateAttribute?: 'position' | 'size'
   lockX?: boolean
   lockY?: boolean
-  onUpdate?: (shape: Shape | Komponent, position: Vector2d) => void
+  onUpdate?: (data: { shape: ShapeOrGroup; startPosition: Vector2d; endPosition: Vector2d }) => void
   /** 确认事件名或自动确认延时时长 */
   confirmEvent?: keyof GlobalEventHandlersEventMap | number
 }
 
 export interface UpdateArgs {
-  shape: Shape | Komponent
+  shape: ShapeOrKomponent
   startPosition: Vector2d
   endPosition: Vector2d
 }
@@ -78,7 +77,7 @@ export const draw = (layer: Layer, options = {} as DrawOptions) => {
     lockX,
     lockY,
   } = options
-  const onUpdate = _onUpdate ?? updateAttribute === 'size' ? updateSize : updatePosition
+  const onUpdate = _onUpdate ?? (updateAttribute === 'size' ? updateSize : updatePosition)
   const stage = layer.getStage()
 
   const $create = new Bluebird<ReturnType<typeof createShape>>((resolve, reject, onCancel) => {

@@ -1,5 +1,6 @@
 import Konva from 'konva'
-import { KonvaEventObject } from 'konva/lib/Node'
+import { KonvaEventObject, Node } from 'konva/lib/Node'
+import { Shape } from 'konva/lib/Shape'
 
 export interface KonvaChangeEvent<T extends Konva.Node, K extends string & keyof T> extends KonvaEventObject<Event> {
   currentTarget: T
@@ -11,7 +12,12 @@ export interface KonvaChangeEvent<T extends Konva.Node, K extends string & keyof
 type ObserverOptions<T, V> = {
   beforeSet?: (value: V, oldValue: V, target: T) => V
   afterSet?: (oldValue: V | undefined, newValue: V, target: T) => void
+  useGetterSetter?: boolean
   fireChangeEvent?: boolean
+  /**
+   * 请求 Konva 更新
+   */
+  requestDraw?: boolean
 }
 const toCapCase = (s: string, prefix = '') => prefix + s[0].toUpperCase() + s.slice(1)
 
@@ -51,28 +57,17 @@ type ObserverDecorator<R extends Konva.Node, S extends string & keyof R> = (
 /**
  * Konva style set/get observer decorator
  */
-export function attr<T extends Konva.Node, P extends string & keyof T>(
-  target: T,
-  propertyKey: P,
-  options?: ObserverOptions<T, T[P]>,
-): ObserverDecorator<T, P>
-export function attr<T extends Konva.Node, P extends string & keyof T>(
-  options?: ObserverOptions<T, T[P]>,
-): ObserverDecorator<T, P>
-export function attr<T extends Konva.Node, P extends string & keyof T>(
-  target?: T,
-  propertyKey?: P,
+export function attr<T extends Konva.Node = any, P extends string & keyof T = any>(
   options?: ObserverOptions<T, T[P]>,
 ): ObserverDecorator<T, P> {
   // decorator
+  const { beforeSet = id, afterSet, useGetterSetter, fireChangeEvent, requestDraw } = options ?? {}
   return function (target: T, key: P) {
-    const { beforeSet = id, afterSet, fireChangeEvent } = options ?? {}
-
     Object.defineProperty(target, key, {
       configurable: true,
       enumerable: true,
       // writable: true,
-      set(nextValue: T[P]) {
+      set(this: T, nextValue: T[P]) {
         const oldVal = Reflect.get(this, key)
         if (Object.is(nextValue, oldVal)) return
         // attrs map
@@ -84,35 +79,32 @@ export function attr<T extends Konva.Node, P extends string & keyof T>(
 
         const hasRendered = Reflect.get(this, '__hasRendered')
         if (Reflect.has(attrs, key) || hasRendered) {
-          // config callback
-          // lifecycle callback
           const newVal = beforeSet.call(this, nextValue, oldVal, this)
           const changedProp = { key, oldVal, newVal }
-          // if (hasRendered) {
-          //   invok(this, 'propWillUpdate', changedProp)
-          // }
           attrs[key] = nextValue
-          // invok(this, '__didUpdate', changedProp)
-
-          // if (hasRendered) {
-          //   invok(this, 'propDidUpdate', changedProp)
-          // }
           afterSet?.call(this, oldVal, newVal, this)
           fireChangeEvent && _fireChangeEvent(this, key, changedProp)
         } else {
           attrs[key] = nextValue
         }
+
+        if (requestDraw || (!useGetterSetter && target instanceof Shape)) {
+          this._requestDraw()
+        }
       },
       get() {
-        return this.attrs?.[key]
+        const getter = Reflect.get(this, toCapCase(key, 'get'))
+        return getter ? Reflect.apply(getter, this, []) : this.attrs?.[key]
       },
     })
 
-    useGetterSetter(target, key)
+    if (useGetterSetter) {
+      addGetterSetter(target, key)
+    }
   }
 }
 
-export const useGetterSetter = <T, K extends string & keyof T>(target: T, key: K) => {
+export const addGetterSetter = <T, K extends string & keyof T>(target: T, key: K) => {
   // Konva style setter getter
   Object.defineProperty(target, toCapCase(key, 'set'), {
     value(value: K) {
@@ -152,5 +144,34 @@ export interface Observed {
   /**
    * 渲染到 Konva
    */
-  render(): void
+  render(): null | Node[]
+}
+
+interface Newable {
+  new (...args: any[]): any
+}
+
+export const observe = <T extends Newable>(constructor: T) => {
+  return class Observed extends constructor {
+    constructor(...args: any[]) {
+      super(...args)
+
+      this.attrs = new Proxy({ ...this.attrs } as Record<string, any>, {
+        set: (attrs, key: string, value) => {
+          const oldVal = attrs[key]
+          const hasRendered = this.__hasRendered
+          if (oldVal === value) {
+            return true
+          }
+
+          hasRendered && this.propWillUpdate({ key, oldVal, newVal: value })
+          attrs[key] = value // set value
+          this.__didUpdate()
+          hasRendered && this.propDidUpdate({ key, oldVal, newVal: value })
+          this._fireChangeEvent(key, oldVal, value)
+          return true
+        },
+      })
+    }
+  }
 }

@@ -7,16 +7,16 @@ const layers: InitStore['layers'] = [
     id: 'background',
     name: 'background',
     entities: [
-      {
-        id: 'ent-1',
-        x: 200,
-        y: 100,
-        width: 200,
-        height: 200,
-        type: 'svgPath' as const,
-        stroke: '#ff3300',
-        data: 'M 0 0 L 200 100 L 170 200 z',
-      },
+      // {
+      //   id: 'ent-1',
+      //   x: 200,
+      //   y: 100,
+      //   width: 200,
+      //   height: 200,
+      //   type: 'svgPath' as const,
+      //   stroke: '#ff3300',
+      //   data: 'M 0 0 L 200 100 L 170 200 z',
+      // },
       // {
       //   id: 'ent-2',
       //   x: 100,
@@ -107,13 +107,24 @@ const layers: InitStore['layers'] = [
       //   stroke: 'red',
       //   type: 'basePoint' as const,
       // }
+      // {
+      //   id: 'base-point',
+      //   x: 240,
+      //   y: 200,
+      //   rotation: 90,
+      //   type: 'basePoint' as const,
+      // },
       {
-        id: 'base-point',
-        x: 285,
-        y: 200,
-        rotation: 90,
+        type: 'axis',
         stroke: 'red',
-        type: 'basePoint' as const,
+        startPoint: [50, 50],
+        endPoint: [200, 300],
+      },
+      {
+        type: 'nock',
+        stroke: 'red',
+        startPoint: [50, 50],
+        endPoint: [200, 300],
       },
     ],
   },
@@ -130,6 +141,7 @@ const actions = [
     action: 'draw',
     options: { type: 'elevation', lockY: true, attributes: { stroke: 'red' } },
   },
+  { action: 'offset', options: { value: 200 } },
 ]
 actions.forEach(a => {
   const btn = document.createElement('button')

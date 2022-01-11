@@ -54,8 +54,7 @@ export class SvgButton extends Komponent implements Observed, SvgButtonOptions {
     data: 'M70 0 Q8 8 0 72 h70 v-6 h-70 M70 0 v72 h17 v-72 h-17 z',
   })
   $btttonArea = new Konva.Rect({
-    id: 'btttonArea',
-    name: 'unselectable',
+    name: 'btttonArea unselectable',
     draggable: false,
     width: this.width(),
     height: this.height(),
@@ -64,8 +63,8 @@ export class SvgButton extends Komponent implements Observed, SvgButtonOptions {
   update() {
     const { $mouseDraw, stroke, fill, strokeWidth, dash, mouseData, mouseOverData, mouseDownData, _mouseType } = this
     let data = mouseData
-    if (_mouseType == 'over' && mouseOverData) data = mouseOverData
-    else if (_mouseType == 'down') data = mouseDownData ? mouseDownData : mouseOverData ? mouseOverData : mouseData
+    if (_mouseType === 'over' && mouseOverData) data = mouseOverData
+    else if (_mouseType === 'down') data = mouseDownData ? mouseDownData : mouseOverData ? mouseOverData : mouseData
     $mouseDraw.setAttrs({
       stroke: stroke,
       fill: fill,

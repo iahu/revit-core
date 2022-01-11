@@ -1,12 +1,14 @@
-import { isString } from '@actions/helper'
+import { isShape, isString } from '@actions/helper'
 import Komponent from '@shapes/komponent'
 import { Container } from 'konva/lib/Container'
 import { Group } from 'konva/lib/Group'
 import { Layer } from 'konva/lib/Layer'
 import { Node } from 'konva/lib/Node'
+import { Shape } from 'konva/lib/Shape'
 import { Stage } from 'konva/lib/Stage'
 
 export type ContainerTypes = Stage | Layer | Group | Komponent | Container
+type ContainerOrShape = ContainerTypes | Shape
 
 const matchAttribute = (node: Node, key: string, value: any, op: string) => {
   const property = node.getAttr(key)
@@ -28,7 +30,7 @@ const matchAttribute = (node: Node, key: string, value: any, op: string) => {
   }
 }
 
-const findPseudoNode = (nodes: ContainerTypes[], op: string, operand?: string | number) => {
+const findPseudoNode = (nodes: ContainerOrShape[], op: string, operand?: string | number) => {
   switch (op) {
     case 'eq': {
       return operand ? [nodes[Number(operand)]] : null
@@ -50,13 +52,15 @@ const coreSelectorPattern = /^([.#]?[a-zA-Z_0-9-]+)/
 const attrSelectorPattern = /^\[([^^!|~*$=]+)(([\^!|~*$]?=)['"]?([^"'\]]+)['"]?)?\]/
 const pseudoSelectorPattern = /^:(eq|first-child|has)(\(([^)]+)\))?/
 
-export const find = (container: ContainerTypes, selector: string) => {
+export const find = (container: ContainerOrShape, selector: string) => {
   const coreSelector = selector.match(coreSelectorPattern)
-  let nodes = [] as ContainerTypes[]
+  let nodes = [] as ContainerOrShape[]
   if (coreSelector) {
     // 拿掉 coreSelector
     selector = selector.replace(coreSelector[0], '')
-    nodes = container.find(coreSelector[1])
+    if (!isShape(container)) {
+      nodes = container.find(coreSelector[1])
+    }
   }
 
   if (!nodes?.length) {
@@ -96,13 +100,13 @@ export const find = (container: ContainerTypes, selector: string) => {
  * query(stage, '.floor-levels-elevation:first-child EditableText') => [EditableText] // stage -> .a:floor-levels-elevation -> EditableText
  * ```
  */
-export const query = (container: ContainerTypes, selector: string) => {
+export const query = (container: ContainerOrShape, selector: string) => {
   const selectors = selector.split(/\s+/g)
   let nodes = [container]
 
   while (selectors.length) {
     const s = selectors.shift()
-    nodes = nodes.reduce((acc, node) => find(node, s as string), [] as ContainerTypes[])
+    nodes = nodes.reduce((acc, node) => find(node, s as string), [] as ContainerOrShape[])
     if (!nodes.length) return nodes
   }
 

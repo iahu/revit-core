@@ -26,3 +26,19 @@ export const kadInput = <T = Maybe<Record<string | number, unknown>>>() => {
     })
   })
 }
+
+export const onEsc = () => {
+  return new Bluebird((resolve, reject, onCancel) => {
+    const handler = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        resolve()
+        window.removeEventListener('keydown', handler)
+      }
+    }
+    window.addEventListener('keydown', handler)
+
+    onCancel?.(() => {
+      window.removeEventListener('keydown', handler)
+    })
+  })
+}

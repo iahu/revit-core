@@ -24,7 +24,7 @@ interface LevelOptions {
   label?: string
 }
 
-type Formatter = (label: number | string) => number | string
+type Formatter = (label: number | string) => string
 export interface FloorLevelsOptions {
   // 水平线列表，相对差
   floorLevels?: LevelOptions[]
@@ -236,7 +236,7 @@ export class FloorLevels extends Komponent implements Observed {
     const { formatter = identity } = this
     const sortedData = data.sort((a, b) => a.y - b.y)
     return sortedData.map((opts, idx) => {
-      return createShape('elevation', {
+      return new Elevation({
         name: 'floor-levels-elevation',
         x: opts.x ?? 0,
         y: -opts.y,
@@ -276,21 +276,24 @@ export class FloorLevels extends Komponent implements Observed {
 
       if (previous) {
         this.$bottomRuler.setAttrs(this.caclutateRuleAttributes(previous, selectedElevation))
+        this.$bottomRuler.visible(rulerVisiable)
       }
       if (next) {
         this.$topRuler.setAttrs(this.caclutateRuleAttributes(selectedElevation, next))
+        this.$topRuler.visible(rulerVisiable)
       }
 
-      this.$topRuler.visible(rulerVisiable)
       if (!this.children?.includes(this.$topRuler)) {
         this.add(this.$topRuler)
       }
 
-      this.$bottomRuler.visible(rulerVisiable)
       if (!this.children?.includes(this.$bottomRuler)) {
         this.$bottomRuler.parent = null
         this.add(this.$bottomRuler)
       }
+    } else {
+      this.$topRuler.visible(false)
+      this.$bottomRuler.visible(false)
     }
   }
 

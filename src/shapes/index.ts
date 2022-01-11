@@ -13,37 +13,21 @@ import { Level, LevelOptions } from './level'
 import { SelectBox } from './select-box'
 import { SvgButton } from './svg-button'
 import { Pointer, PointerOptions } from './pointer'
-import { BasePoint, BasePointOptions } from './base-point'
+import { ViewPoint, ViewPointOptions } from './view-point'
 import Ruler, { RulerConfig } from './ruler'
+import { Maybe } from '@actions/helper'
+import { Group } from 'konva/lib/Group'
+import CrossCircle, { CrossCircleOptions } from './cross-circle'
+import { BasePoint, BasePointOptions } from './base-point'
+import { Axis, AxisOptions } from './axis'
+import { Nock } from './nock'
 
 export type Position = [number, number]
-
-export type EntityType =
-  | 'svgPath'
-  | 'imgUrl'
-  | 'editableText'
-  | 'img'
-  | 'text'
-  | 'line'
-  | 'rect'
-  | 'door'
-  | 'svgButton'
-  | 'selectBox'
-  | 'bricks'
-  | 'level'
-  | 'floorLevels'
-  | 'flag'
-  | 'flagLabel'
-  | 'elevation'
-  | 'ruler'
-  | 'imageFollow'
-  | 'pointer'
-  | 'basePoint'
 
 // build-in shapes
 export interface BaseEntity extends Konva.ShapeConfig {
   id?: string
-  type: EntityType
+  type: string
 }
 
 type CustomShape<Type extends EntityType, Inherit extends Konva.ShapeConfig = Konva.ShapeConfig> = BaseEntity &
@@ -51,50 +35,39 @@ type CustomShape<Type extends EntityType, Inherit extends Konva.ShapeConfig = Ko
     type: Type
   }
 
-export type SvgPathEntity = CustomShape<'svgPath'>
-export type ImgUrlEntity = CustomShape<'imgUrl', Omit<Konva.ImageConfig, 'image'> & { imgUrl: string }>
-export type ImgEntity = CustomShape<'img', Konva.ImageConfig & { image?: CanvasImageSource }>
-export type TextEntity = CustomShape<'text', Konva.TextConfig>
-export type LineEntity = CustomShape<'line', Konva.LineConfig>
-export type RectEntity = CustomShape<'rect', Konva.RectConfig>
+export interface Shapes {
+  // build in shapes
+  svgPath: CustomShape<'svgPath'>
+  imgUrl: CustomShape<'imgUrl', Omit<Konva.ImageConfig, 'image'> & { imgUrl: string }>
+  img: CustomShape<'img', Konva.ImageConfig & { image?: CanvasImageSource }>
+  text: CustomShape<'text', Konva.TextConfig>
+  line: CustomShape<'line', Konva.LineConfig>
+  rect: CustomShape<'rect', Konva.RectConfig>
+  circle: CustomShape<'circle', Konva.RectConfig>
 
-// custom shapes
-export type EditableTextEntity = CustomShape<'editableText', Konva.TextConfig & EditableTextOptions>
-export type DoorEntity = CustomShape<'door', DoorOptions>
-export type BricksEntity = CustomShape<'bricks', BricksConfig>
-export type FlagEntity = CustomShape<'flag', FlagOptions>
-export type FlagLabelEntity = CustomShape<'flagLabel', FlagLabelOptions>
-export type LevelEntity = CustomShape<'level', LevelOptions>
-export type ElevationEntity = CustomShape<'elevation', ElevationOptions>
-export type FloorLevelsEntity = CustomShape<'floorLevels', FloorLevelsOptions>
-export type RulerEntity = CustomShape<'ruler', RulerConfig>
-export type SvgButtonEntity = CustomShape<'svgButton'>
-export type SelectBoxEntity = CustomShape<'selectBox'>
-export type ImageFollowEntity = CustomShape<'imageFollow'>
-export type PointerEntity = CustomShape<'pointer', PointerOptions>
-export type BasePointEntity = CustomShape<'basePoint', BasePointOptions>
+  // custom shapes
+  editableText: CustomShape<'editableText', Konva.TextConfig & EditableTextOptions>
+  door: CustomShape<'door', DoorOptions>
+  bricks: CustomShape<'bricks', BricksConfig>
+  flag: CustomShape<'flag', FlagOptions>
+  flagLabel: CustomShape<'flagLabel', FlagLabelOptions>
+  level: CustomShape<'level', LevelOptions>
+  elevation: CustomShape<'elevation', ElevationOptions>
+  floorLevels: CustomShape<'floorLevels', FloorLevelsOptions>
+  ruler: CustomShape<'ruler', RulerConfig>
+  svgButton: CustomShape<'svgButton'>
+  selectBox: CustomShape<'selectBox'>
+  imageFollow: CustomShape<'imageFollow'>
+  pointer: CustomShape<'pointer', PointerOptions>
+  viewPoint: CustomShape<'viewPoint', ViewPointOptions>
+  crossCircle: CustomShape<'crossCircle', CrossCircleOptions>
+  basePoint: CustomShape<'basePoint', BasePointOptions>
+  axis: CustomShape<'axis', AxisOptions>
+  nock: CustomShape<'nock', AxisOptions>
+}
 
-export type Entity =
-  | SvgPathEntity
-  | ImgUrlEntity
-  | ImgEntity
-  | TextEntity
-  | LineEntity
-  | RectEntity
-  | EditableTextEntity
-  | DoorEntity
-  | FlagEntity
-  | FlagLabelEntity
-  | LevelEntity
-  | ElevationEntity
-  | FloorLevelsEntity
-  | BricksEntity
-  | SvgButtonEntity
-  | SelectBoxEntity
-  | ImageFollowEntity
-  | PointerEntity
-  | BasePointEntity
-  | RulerEntity
+export type EntityType = keyof Shapes
+export type Entity = Shapes[EntityType]
 
 export interface Layer extends Konva.LayerConfig {
   id: string
@@ -105,7 +78,8 @@ export interface Layer extends Konva.LayerConfig {
   entities: Array<Entity>
 }
 
-export type MaybeShapeOrKomponent = Konva.Shape | Komponent | undefined
+export type ShapeOrKomponent = Konva.Shape | Group | Komponent
+export type MaybeShapeOrKomponent = Maybe<ShapeOrKomponent>
 
 /**
  * 创建图形的工厂函数
@@ -120,10 +94,12 @@ export function createShape(typeOrEntity: EntityType | Entity, entityOrNot?: Par
     entity = typeOrEntity
   }
 
-  const config = {
+  const options = {
+    strokeWidth: 1,
+    hitStrokeWidth: 6,
     // @TODO 改为 false
     draggable: true,
-    shadowForStrokeEnabled: false,
+    // shadowForStrokeEnabled: false,
     ...entity,
   }
 
@@ -132,49 +108,60 @@ export function createShape(typeOrEntity: EntityType | Entity, entityOrNot?: Par
     const image = new Image()
     image.src = entity?.imgUrl
     shape = new Konva.Image({ image })
-    shape.setAttrs(config)
+    shape.setAttrs(options)
   } else if (type === 'editableText') {
-    shape = new EditableText(config)
+    shape = new EditableText(options)
   } else if (type === 'img') {
-    shape = new Konva.Image({ ...config, image: entity?.image })
+    shape = new Konva.Image({ ...options, image: entity?.image })
   } else if (type === 'svgPath') {
-    shape = new Konva.Path(config)
+    shape = new Konva.Path(options)
   } else if (type === 'text') {
-    shape = new Konva.Text(config)
+    shape = new Konva.Text(options)
   } else if (type === 'line') {
-    shape = new Konva.Line(config)
+    shape = new Konva.Line(options)
   } else if (type === 'rect') {
-    shape = new Konva.Rect(config)
+    shape = new Konva.Rect(options)
+  } else if (type === 'circle') {
+    shape = new Konva.Circle(options)
   } else if (type === 'door') {
-    shape = new Door(config)
+    shape = new Door(options)
   } else if (type === 'bricks') {
-    shape = new Bricks(config)
+    shape = new Bricks(options)
   } else if (type === 'flag') {
-    shape = new Flag(config)
+    shape = new Flag(options)
   } else if (type === 'flagLabel') {
-    shape = new FlagLabel(config)
+    shape = new FlagLabel(options)
   } else if (type === 'level') {
-    shape = new Level(config)
+    shape = new Level(options)
   } else if (type === 'elevation') {
-    shape = new Elevation(config)
+    shape = new Elevation(options)
   } else if (type === 'floorLevels') {
-    shape = new FloorLevels(config)
+    shape = new FloorLevels(options)
   } else if (type === 'svgButton') {
-    shape = new SvgButton(config)
+    shape = new SvgButton(options)
   } else if (type === 'selectBox') {
-    shape = new SelectBox(config)
+    shape = new SelectBox(options)
   } else if (type === 'imageFollow') {
-    shape = new ImageFollow(config)
+    shape = new ImageFollow(options)
   } else if (type === 'pointer') {
-    shape = new Pointer(config)
-  } else if (type === 'basePoint') {
-    shape = new BasePoint(config)
+    shape = new Pointer(options)
+  } else if (type === 'viewPoint') {
+    shape = new ViewPoint(options)
   } else if (type === 'ruler') {
-    shape = new Ruler(config)
-  } else {
-    // @todo 具体化
-    // shape = new Konva.Shape(config)
+    shape = new Ruler(options)
+  } else if (type === 'crossCircle') {
+    shape = new CrossCircle(options)
+  } else if (type === 'basePoint') {
+    shape = new BasePoint(options)
+  } else if (type === 'axis') {
+    shape = new Axis(options)
+  } else if (type === 'nock') {
+    shape = new Nock(options)
   }
+  // @todo 具体化
+  // else {
+  // shape = new Konva.Shape(config)
+  // }
 
   return shape
 }

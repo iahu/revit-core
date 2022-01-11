@@ -1,53 +1,39 @@
-import Konva from 'konva'
-import { SELECTED_CLASSNAME } from '@actions/helper'
-import { EditableText } from './editable-text'
+import { ContainerConfig } from 'konva/lib/Container'
+import { KonvaEventObject } from 'konva/lib/Node'
+import { Arrow } from 'konva/lib/shapes/Arrow'
+import CrossCircle from './cross-circle'
 import Komponent from './komponent'
-import { Observed, attr } from './observer'
-import { Pointer } from './pointer'
+import { attr, ChangedProp } from './observer'
 
 export interface BasePointOptions {
   radius?: number
-  strokeWidth?: number
-  axisWidth?: number
+  axisLength?: number
+  showAxis?: boolean
 }
 
-export class BasePoint extends Komponent implements Observed, BasePointOptions {
-  @attr<BasePoint, 'radius'>() radius = 20
-  @attr<BasePoint, 'axisWidth'>() axisWidth = 1000
+export class BasePoint extends Komponent {
+  @attr<BasePoint, 'radius'>() radius = 10
+  @attr<BasePoint, 'axisLength'>() axisLength = 50
+  @attr<BasePoint, 'showAxis'>() showAxis = false
 
-  $pointer = new Pointer({ name: 'base-point-pointer unselectable' })
+  constructor(options: BasePointOptions & ContainerConfig) {
+    super(options)
+    this.setAttrs(options)
+  }
 
-  $textInner = new EditableText({ name: 'base-point-text-inner unselectable', text: '-', editable: false })
-  $textOuter = new EditableText({ name: 'base-point-text-outer unselectable', text: '-', editable: false })
-  $axis = new Konva.Line({ name: 'base-point-axis unselectable', visible: false })
+  $crossCircle = new CrossCircle({ name: 'base-point-cross-cricle unselectable', radius: this.radius })
+  $xAxis = new Arrow({ name: 'base-point-x-axis unselectable', pointerWidth: 5, fill: 'white', points: [0, 0, 0, 0] })
+  $yAxis = new Arrow({ name: 'base-point-y-axis unselectable', pointerWidth: 5, fill: 'white', points: [0, 0, 0, 0] })
 
   update() {
-    const { radius, rotation = 0, stroke, strokeWidth, axisWidth } = this.getAttrs()
-
-    this.$pointer.setAttrs({ radius, stroke })
-
-    this.$textInner.setAttrs({ stroke, strokeWidth, offsetX: 2, offsetY: 6, rotation: -rotation })
-    this.$textOuter.setAttrs({
-      stroke,
-      strokeWidth,
-      text: '-',
-      offsetX: 2,
-      offsetY: 6,
-      y: 1.414 * (radius + 6),
-      rotation: -rotation,
-    })
-
-    const axisRadius = axisWidth / 2
-    this.$axis.setAttrs({
-      stroke,
-      strokeWidth,
-      points: [-axisRadius, 0, axisRadius, 0],
-      visible: this.hasName(SELECTED_CLASSNAME),
-    })
+    const { stroke, strokeWidth, radius, axisLength, showAxis, selected } = this.getAttrs()
+    this.$crossCircle.setAttrs({ stroke, strokeWidth, radius })
+    const visible = showAxis || selected
+    this.$xAxis.setAttrs({ stroke: 'red', strokeWidth, offsetY: radius, points: [0, 0, 0, -axisLength], visible })
+    this.$yAxis.setAttrs({ stroke: 'green', strokeWidth, offsetX: radius, points: [0, 0, -axisLength, 0], visible })
   }
 
   render() {
-    // this.update()
-    return [this.$pointer, this.$textInner, this.$textOuter, this.$axis]
+    return [this.$xAxis, this.$yAxis, this.$crossCircle]
   }
 }

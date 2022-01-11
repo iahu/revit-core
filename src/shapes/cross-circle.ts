@@ -1,30 +1,19 @@
 import Konva from 'konva'
-import { Factory } from 'konva/lib/Factory'
-import { getNumberValidator } from 'konva/lib/Validators'
 import { DEG_TO_RAD } from './helper'
-import { attr } from './observer'
 
-export interface CrossConfig extends Konva.ShapeConfig {
-  /**
-   * cross angle degree
-   */
-  angle?: number
-
-  /**
-   * cross line radius
-   */
+export interface CrossCircleOptions extends Konva.ShapeConfig {
   radius?: number
 }
 
-export default class Cross extends Konva.Shape {
+export default class CrossCircle extends Konva.Shape {
   angle: number
   radius: number
 
   getClassName() {
-    return 'Cross'
+    return this.constructor.name
   }
 
-  constructor(config?: CrossConfig) {
+  constructor(config?: CrossCircleOptions) {
     super(config)
 
     this.className = this.getClassName()
@@ -35,17 +24,21 @@ export default class Cross extends Konva.Shape {
     const { angle = 45, radius = 8 } = this.getAttrs()
     const x = radius * Math.cos(angle * DEG_TO_RAD)
     const y = radius * Math.sin(angle * DEG_TO_RAD)
+
+    context.beginPath()
+    context.arc(0, 0, radius, 0, 360 * DEG_TO_RAD, true)
+    context.closePath()
+    context.fillStrokeShape(this)
+
     // \
     context.beginPath()
     context.moveTo(-x, -y)
     context.lineTo(x, y)
-    context.stroke()
     // /
     context.moveTo(x, -y)
     context.lineTo(-x, y)
-
-    context._context.stroke()
-    context.stroke()
+    context.closePath()
+    context.fillStrokeShape(this)
 
     context.fillStrokeShape(this)
   }

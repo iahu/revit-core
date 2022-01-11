@@ -20,6 +20,11 @@
     "incremental": true,
     "paths": {
       "Bluebird": ["bluebird"],
+      "@actions/index": ["./actions/index"],
+      "@api/index": ["./api/index"],
+      "@shapes/index": ["./shapes/index"],
+      "@input/index": ["./input/index"],
+      "@helpers/index": ["./helpers/index"],
       "@actions/*": ["./actions/*"],
       "@api/*": ["./api/*"],
       "@shapes/*": ["./shapes/*"],
