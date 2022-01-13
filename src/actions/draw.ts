@@ -1,30 +1,11 @@
 import { createShape, Entity, EntityType, ShapeOrKomponent } from '@shapes/index'
 import Bluebird from 'bluebird'
-import { ShapeOrGroup } from 'index'
 import { Layer } from 'konva/lib/Layer'
 import { Vector2d } from 'konva/lib/types'
-import { delay, listenOn, useEventTarget, usePoinerPosition } from './helper'
+import { delay, listenOn, noop, useEventTarget, usePoinerPosition, useSnap } from './helper'
 import { mouseInput } from './input'
 import { setCursor } from './set-cursor'
 import { setTitle } from './set-title'
-
-export interface DrawOptions {
-  type: EntityType
-  attributes?: Entity
-  /** 自动开始，即默认就创建 */
-  autoStart?: boolean
-  /** 开始创建的事件名 */
-  startEvent: keyof GlobalEventHandlersEventMap
-  /** 更新参数的事件名 */
-  updateEvent?: keyof GlobalEventHandlersEventMap
-  /** 设置要更新的位置或尺寸，默认为尺寸 */
-  updateAttribute?: 'position' | 'size'
-  lockX?: boolean
-  lockY?: boolean
-  onUpdate?: (data: { shape: ShapeOrGroup; startPosition: Vector2d; endPosition: Vector2d }) => void
-  /** 确认事件名或自动确认延时时长 */
-  confirmEvent?: keyof GlobalEventHandlersEventMap | number
-}
 
 export interface UpdateArgs {
   shape: ShapeOrKomponent
@@ -37,6 +18,7 @@ export const updatePosition = (args: UpdateArgs) => {
   shape.setAttrs(endPosition)
   return shape
 }
+
 export const updateSize = (args: UpdateArgs) => {
   const { shape, startPosition, endPosition } = args
   const width = Math.abs(endPosition.x - startPosition.x)
@@ -48,6 +30,56 @@ export const updateSize = (args: UpdateArgs) => {
     height,
   })
   return shape
+}
+
+export const updatePoints = (args: UpdateArgs) => {
+  const { shape, startPosition, endPosition } = args
+  const points = shape.getAttr('points')
+  const startPoint = shape.getAttr('startPoint')
+  const endPoint = shape.getAttr('endPoint')
+  const [x1, y1, x2, y2] = [startPosition.x, startPosition.y, endPosition.x, endPosition.y]
+
+  if (points) {
+    shape.setAttr('points', [x1, y1, x2, y2])
+  } else if (startPoint && endPoint) {
+    const { x, y } = shape.getAbsolutePosition()
+    // 相对定位，也许可以支持绝对定位
+    shape.setAttrs({ startPoint: [x1 - x, y1 - y], endPoint: [x2 - x, y2 - y] })
+  }
+  return shape
+}
+
+const onUpdateMap = {
+  position: updatePosition,
+  size: updateSize,
+  points: updatePoints,
+}
+
+export interface DrawOptions {
+  type: EntityType
+  /** 将绘制图形的属性 */
+  shapeAttrs?: Entity
+  /** 自动开始，即默认就创建 */
+  autoStart?: boolean
+  /** 开始创建的事件名 */
+  startEvent: keyof GlobalEventHandlersEventMap
+  /** 更新参数的事件名 */
+  updateEvent?: keyof GlobalEventHandlersEventMap
+  /** 设置要更新的位置或尺寸，默认为尺寸 */
+  updateAttribute?: keyof typeof onUpdateMap
+  lockX?: boolean
+  lockY?: boolean
+  beforeStart?: (updateArgs: UpdateArgs) => void
+  onStart?: (updateArgs: UpdateArgs) => void
+  afterStart?: (updateArgs: UpdateArgs) => void
+  onUpdate?: (updateArgs: UpdateArgs) => void
+  onEnd?: (shape: ShapeOrKomponent) => void
+  /** 确认事件名或自动确认延时时长 */
+  confirmEvent?: keyof GlobalEventHandlersEventMap | number
+  /** 贪心模式 */
+  greedy?: boolean
+  snapPoints?: Vector2d[]
+  snapDistance?: number
 }
 
 /**
@@ -67,17 +99,24 @@ export const updateSize = (args: UpdateArgs) => {
 export const draw = (layer: Layer, options = {} as DrawOptions) => {
   const {
     type,
-    attributes = {} as Entity,
+    shapeAttrs = {} as Entity,
     autoStart,
     startEvent,
     updateEvent = 'mousemove',
     updateAttribute = 'size',
+    beforeStart = noop,
+    onStart: _onStart,
+    afterStart = noop,
     onUpdate: _onUpdate,
+    onEnd = noop,
     confirmEvent = 'click',
     lockX,
     lockY,
+    snapPoints: _snapPoints,
+    snapDistance = 5,
   } = options
-  const onUpdate = _onUpdate ?? (updateAttribute === 'size' ? updateSize : updatePosition)
+  const onUpdate = _onUpdate ?? onUpdateMap[updateAttribute] ?? updateSize
+  const onStart = _onStart ?? onUpdate
   const stage = layer.getStage()
 
   const $create = new Bluebird<ReturnType<typeof createShape>>((resolve, reject, onCancel) => {
@@ -85,7 +124,7 @@ export const draw = (layer: Layer, options = {} as DrawOptions) => {
       return reject('no stage found')
     }
 
-    const shape = createShape({ ...attributes, type } as Entity)
+    const shape = createShape({ ...shapeAttrs, type } as Entity)
     if (!shape) {
       return reject(`invalid shape typpe: "${type}"`)
     }
@@ -100,12 +139,21 @@ export const draw = (layer: Layer, options = {} as DrawOptions) => {
 
     setTitle(layer, '点击以绘制图形')
     setCursor(layer, 'crosshair')
+    const snapButtons = stage.find('SnapButton')
+    const snapPoints = _snapPoints ?? stage.find('SnapButton').map(btn => btn.getAbsolutePosition())
+    const useSnapPoints = useSnap.bind(null, snapPoints, snapDistance)
+
     return mouseInput(stage, startEvent)
       .then(useEventTarget)
       .then(usePoinerPosition)
+      .then(useSnapPoints)
       .then(startPosition => {
-        updatePosition({ shape, startPosition, endPosition: startPosition })
+        const updateArgs = { shape, startPosition, endPosition: startPosition }
+        beforeStart(updateArgs)
+        onStart(updateArgs)
         addShape()
+        snapButtons.forEach(b => b.moveToTop())
+        afterStart(updateArgs)
         onCancel?.(() => {
           if ($create.isPending()) {
             shape.destroy()
@@ -121,16 +169,13 @@ export const draw = (layer: Layer, options = {} as DrawOptions) => {
             x: lockX ? startPosition.x : _endPosition.x,
             y: lockY ? startPosition.y : _endPosition.y,
           }
-          onUpdate({ shape, startPosition, endPosition })
+          onUpdate({ shape, startPosition, endPosition: useSnapPoints(endPosition) })
         })
 
         onCancel?.($stopUpdate)
 
-        if (typeof confirmEvent === 'number') {
-          return delay(confirmEvent).then($stopUpdate).return(shape)
-        } else {
-          return mouseInput(stage, confirmEvent).then($stopUpdate).return(shape)
-        }
+        const $end = typeof confirmEvent === 'number' ? delay(confirmEvent) : mouseInput(stage, confirmEvent)
+        return $end.then($stopUpdate).return(shape).tap(onEnd).return(shape)
       })
       .then(resolve)
       .finally(() => {

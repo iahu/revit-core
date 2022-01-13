@@ -3,7 +3,7 @@ import { getTransformer } from '@helpers/transfomer'
 import Bluebird, { Promise } from 'bluebird'
 import { Layer } from 'konva/lib/Layer'
 import { dragSelect } from './drag-select'
-import { findSelected, logger, notUndefined, ShapeOrGroup } from './helper'
+import { findSelected, isKomponent, isShape, isStage, logger, notUndefined, ShapeOrGroup } from './helper'
 import { highlight } from './highlight'
 import { pick } from './pick'
 
@@ -42,6 +42,7 @@ export const select = (layer: Layer, options = {} as SelectOptions) => {
 
   return Bluebird.any(actions)
     .then(nodes => nodes.filter(notUndefined))
+    .then(nodes => nodes.filter(n => isShape(n) || isKomponent(n))) // ignore stage
     .then(logger)
     .then(nodes => {
       applySelect(stage, nodes, useSelectedNode)

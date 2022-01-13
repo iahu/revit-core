@@ -3,42 +3,56 @@ import { ContainerConfig } from 'konva/lib/Container'
 import { KonvaEventObject } from 'konva/lib/Node'
 import { Circle } from 'konva/lib/shapes/Circle'
 import { Line } from 'konva/lib/shapes/Line'
-import { asc, clip } from './helper'
+import { Vector2d } from 'konva/lib/types'
+import { asc } from './helper'
 import { attr, Observed } from './observer'
 import { Resizable, ResizeEvent } from './resizable'
 
-export interface NockOptions {
+export interface SegmentOptions {
+  /**
+   * @todo lineStyle
+   * lineStyle?: LineStyle
+   */
+
+  /** 可进行线段连接 */
+  joinable?: boolean
   startPoint?: number[]
   endPoint?: number[]
-  nockPoint?: number[]
   dotRadius?: number
   lockStartPoint?: boolean
   lockEndPoint?: boolean
-  /**
-   * 跟随弯头变换的点
-   */
-  followerPoint?: 'start' | 'end' | 'startX' | 'startY' | 'endX' | 'endY'
 
   /**
-   * 设置弯折点在超始点范围内移动
+   * 设置移动距离范围
    *
    * number[] 使用是自定义范围
    * boolean  使用起始点的值
    */
   limitX?: number[] | boolean
   limitY?: number[] | boolean
+
+  lockX?: boolean
+  lockY?: boolean
 }
 
-export class Nock extends Resizable implements Observed, NockOptions {
+export class Segment extends Resizable implements Observed, SegmentOptions {
+  @attr() joinable = true
   @attr() startPoint = [0, 0]
   @attr() endPoint = [0, 0]
-  @attr() nockPoint = [0, 0]
   @attr() dotRadius = 3
   @attr() lockStartPoint = false
   @attr() lockEndPoint = false
-  @attr() followerPoint: undefined | NockOptions['followerPoint']
   @attr() limitX = false
   @attr() limitY = false
+  @attr() lockX = false
+  @attr() lockY = false
+
+  /**
+   * @todo implements detected property
+   */
+  get detected(): boolean {
+    return false
+  }
 
   get computedLimitX(): number[] {
     if (Array.isArray(this.limitX)) {
@@ -65,18 +79,15 @@ export class Nock extends Resizable implements Observed, NockOptions {
       startPoint: [x1],
       endPoint: [x2],
       dotRadius,
+      highlighted,
     } = this
-    return Math.max(Math.abs(x2 - x1), dotRadius)
+    return Math.abs(x2 - x1) + Number(highlighted) * 2 * dotRadius
   }
 
   getHeight() {
-    return Math.max(Math.abs(this.endPoint[1] - this.startPoint[1]), this.dotRadius)
+    const { startPoint, endPoint, dotRadius, highlighted } = this
+    return Math.abs(endPoint[1] - startPoint[1]) + Number(highlighted) * 2 * dotRadius
   }
-
-  /**
-   * 跟随点与弯折点所在线段的角度
-   */
-  followerAngle: number | undefined
 
   /**
    * 起始点连线的角度
@@ -90,60 +101,34 @@ export class Nock extends Resizable implements Observed, NockOptions {
     return tr.decompose().rotation
   }
 
-  get isStraight(): boolean {
-    const {
-      startPoint: [x1, y1],
-      endPoint: [x2, y2],
-      nockPoint: [x3, y3],
-    } = this
-    return (y3 - y1) * (x2 - x1) === (y2 - y1) * (x3 - x1)
-  }
-
-  constructor(options?: NockOptions & ContainerConfig) {
+  constructor(options?: SegmentOptions & ContainerConfig) {
     super(options)
-    this.setAttrs(options)
+    this.setAttrs({ draggable: true, ...options })
 
     this.on('resize', this.onResize)
   }
 
-  onResize = (e: KonvaEventObject<Event>) => {
+  onResize(e: KonvaEventObject<Event>) {
     const { originalValue = {}, target, movementX, movementY } = e as ResizeEvent<Record<string, number[]>>
+    const { lockX, lockY } = this
+    const mx = movementX * Number(!lockX)
+    const my = movementY * Number(!lockY)
+
     if (target === this.$startDot) {
       const startPoint = originalValue.startPoint
-      this.startPoint = [startPoint[0] + movementX, startPoint[1] + movementY]
-    } else if (target === this.$nockDot) {
-      const { nockPoint, startPoint, endPoint } = originalValue
-      const point = [nockPoint[0] + movementX, nockPoint[1] + movementY]
-      if (this.limitX) {
-        const [min, max] = this.computedLimitX
-        point[0] = clip(min, max, point[0])
-      }
-      if (this.limitY) {
-        const [min, max] = this.computedLimitY
-        point[1] = clip(min, max, point[1])
-      }
-      this.nockPoint = point
-      const { followerPoint = '' } = this
-      const followStartX = ['start', 'startX'].includes(followerPoint)
-      const followStartY = ['start', 'startY'].includes(followerPoint)
-      const followEndX = ['start', 'endX'].includes(followerPoint)
-      const followEndY = ['start', 'endY'].includes(followerPoint)
-
-      this.startPoint = [startPoint[0] + movementX * +followStartX, startPoint[1] + movementY * +followStartY]
-      this.endPoint = [endPoint[0] + movementX * +followEndX, endPoint[1] + movementY * +followEndY]
+      this.startPoint = [startPoint[0] + mx, startPoint[1] + my]
     } else if (target === this.$endDot) {
       const endPoint = originalValue.endPoint
-      this.endPoint = [endPoint[0] + movementX, endPoint[1] + movementY]
+      this.endPoint = [endPoint[0] + mx, endPoint[1] + my]
+    } else if (target === this) {
+      // 自身移动
+      const { x, y } = originalValue as unknown as Vector2d
+      this.position({ x: x + mx, y: y + my })
     }
   }
 
   $line = new Line({ name: 'nock-line unselectable', hitStrokeWidth: 3 })
   $startDot = new Circle({ name: 'nock-line start-dot', hitStrokeWidth: 3, resizeAttrs: ['startPoint'] })
-  $nockDot = new Circle({
-    name: 'nock-line nock-dot',
-    hitStrokeWidth: 3,
-    resizeAttrs: ['startPoint', 'endPoint', 'nockPoint'],
-  })
   $endDot = new Circle({ name: 'nock-line end-dot', hitStrokeWidth: 3, resizeAttrs: ['endPoint'] })
 
   update() {
@@ -152,18 +137,19 @@ export class Nock extends Resizable implements Observed, NockOptions {
       strokeWidth,
       startPoint,
       endPoint,
-      nockPoint,
       startPoint: [x1, y1],
       endPoint: [x2, y2],
       dotRadius: radius,
       resizable: draggable,
       lockStartPoint,
       lockEndPoint,
-      followerPoint,
+      selected,
+      highlighted,
       hitStrokeWidth,
     } = this.getAttrs()
 
-    this.$line.setAttrs({ stroke, strokeWidth, hitStrokeWidth, points: [...startPoint, ...nockPoint, ...endPoint] })
+    const interaction = selected || highlighted
+    this.$line.setAttrs({ hitStrokeWidth, stroke, strokeWidth, points: [...startPoint, ...endPoint] })
     this.$startDot.setAttrs({
       stroke,
       strokeWidth,
@@ -171,15 +157,7 @@ export class Nock extends Resizable implements Observed, NockOptions {
       x: x1,
       y: y1,
       draggable,
-      visible: !lockStartPoint && !['start', 'startX', 'startY'].includes(followerPoint),
-    })
-    this.$nockDot.setAttrs({
-      stroke,
-      strokeWidth,
-      radius,
-      x: nockPoint[0],
-      y: nockPoint[1],
-      draggable,
+      visible: !lockStartPoint && interaction,
     })
     this.$endDot.setAttrs({
       stroke,
@@ -188,12 +166,12 @@ export class Nock extends Resizable implements Observed, NockOptions {
       x: x2,
       y: y2,
       draggable,
-      visible: !lockEndPoint && !['end', 'endX', 'endY'].includes(followerPoint),
+      visible: !lockEndPoint && interaction,
     })
   }
 
   render() {
     this.update()
-    return [this.$line, this.$startDot, this.$nockDot, this.$endDot]
+    return [this.$line, this.$startDot, this.$endDot]
   }
 }

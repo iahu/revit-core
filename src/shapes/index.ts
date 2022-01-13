@@ -11,7 +11,7 @@ import { ImageFollow } from './image-follow'
 import Komponent from './komponent'
 import { Level, LevelOptions } from './level'
 import { SelectBox } from './select-box'
-import { SvgButton } from './svg-button'
+import { SnapButton } from './snap-button'
 import { Pointer, PointerOptions } from './pointer'
 import { ViewPoint, ViewPointOptions } from './view-point'
 import Ruler, { RulerConfig } from './ruler'
@@ -21,6 +21,8 @@ import CrossCircle, { CrossCircleOptions } from './cross-circle'
 import { BasePoint, BasePointOptions } from './base-point'
 import { Axis, AxisOptions } from './axis'
 import { Nock } from './nock'
+import { RectPointer, RectPointerOptions } from './rect-pointer'
+import { Segment } from './segment'
 
 export type Position = [number, number]
 
@@ -55,15 +57,17 @@ export interface Shapes {
   elevation: CustomShape<'elevation', ElevationOptions>
   floorLevels: CustomShape<'floorLevels', FloorLevelsOptions>
   ruler: CustomShape<'ruler', RulerConfig>
-  svgButton: CustomShape<'svgButton'>
+  snapButton: CustomShape<'snapButton'>
   selectBox: CustomShape<'selectBox'>
   imageFollow: CustomShape<'imageFollow'>
   pointer: CustomShape<'pointer', PointerOptions>
+  rectPointer: CustomShape<'rectPointer', RectPointerOptions>
   viewPoint: CustomShape<'viewPoint', ViewPointOptions>
   crossCircle: CustomShape<'crossCircle', CrossCircleOptions>
   basePoint: CustomShape<'basePoint', BasePointOptions>
   axis: CustomShape<'axis', AxisOptions>
   nock: CustomShape<'nock', AxisOptions>
+  segment: CustomShape<'segment', AxisOptions>
 }
 
 export type EntityType = keyof Shapes
@@ -97,9 +101,6 @@ export function createShape(typeOrEntity: EntityType | Entity, entityOrNot?: Par
   const options = {
     strokeWidth: 1,
     hitStrokeWidth: 6,
-    // @TODO 改为 false
-    draggable: true,
-    // shadowForStrokeEnabled: false,
     ...entity,
   }
 
@@ -137,14 +138,16 @@ export function createShape(typeOrEntity: EntityType | Entity, entityOrNot?: Par
     shape = new Elevation(options)
   } else if (type === 'floorLevels') {
     shape = new FloorLevels(options)
-  } else if (type === 'svgButton') {
-    shape = new SvgButton(options)
+  } else if (type === 'snapButton') {
+    shape = new SnapButton(options)
   } else if (type === 'selectBox') {
     shape = new SelectBox(options)
   } else if (type === 'imageFollow') {
     shape = new ImageFollow(options)
   } else if (type === 'pointer') {
     shape = new Pointer(options)
+  } else if (type === 'rectPointer') {
+    shape = new RectPointer(options)
   } else if (type === 'viewPoint') {
     shape = new ViewPoint(options)
   } else if (type === 'ruler') {
@@ -157,6 +160,8 @@ export function createShape(typeOrEntity: EntityType | Entity, entityOrNot?: Par
     shape = new Axis(options)
   } else if (type === 'nock') {
     shape = new Nock(options)
+  } else if (type === 'segment') {
+    shape = new Segment(options)
   }
   // @todo 具体化
   // else {

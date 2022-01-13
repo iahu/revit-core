@@ -37,7 +37,7 @@ export class Level extends Konva.Shape {
     const { startPoint, endPoint } = this.getAttrs()
     const x = startPoint[0] - endPoint[0]
     const y = startPoint[1] - endPoint[1]
-    return Math.sqrt(x * x + y * y)
+    return Math.hypot(x, y)
   }
 
   _sceneFunc(context: Konva.Context) {

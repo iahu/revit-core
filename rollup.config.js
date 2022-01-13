@@ -12,9 +12,13 @@ export default {
   input: ['./src/**/*.ts', '!./src/**/*.test.ts', '!./src/renderer', '!./src/data'],
   output: { dir: './dist/esm', format: 'esm', sourcemap: true },
   plugins: [
-    resolve(),
+    resolve({ resolveOnly: ['Konva'] }),
     commomjs(),
-    typescript({ typescript: ttypescript, tsconfig: './tsconfig.json' }),
+    typescript({
+      typescript: ttypescript,
+      tsconfig: './tsconfig.json',
+      noEmitOnError: process.env.NODE_EN === 'production',
+    }),
     multiInput(),
     image(),
   ],

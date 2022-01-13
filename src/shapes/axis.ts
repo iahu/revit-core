@@ -21,8 +21,8 @@ export interface AxisOptions {
   anchorRadius?: number
   /** 设置是否显示起点标签或标签文案 */
   startPointLabel?: string | boolean
-  endPointLable?: string | boolean
-  resizable?: boolean
+  endPointLabel?: string | boolean
+  resizabel?: boolean
   /**
    * 缩放时保持方向
    */
@@ -34,7 +34,7 @@ export class Axis extends Resizable implements Observed, AxisOptions {
   @attr() endPoint = [0, 0]
   @attr() label = '1'
   @attr() labelRadius = 14
-  @attr() anchorRadius = 3
+  @attr() anchorRadius = 4
   @attr() startPointLabel: string | undefined
   @attr() endPointLabel: string | undefined
   @attr() resizable = true
@@ -88,11 +88,11 @@ export class Axis extends Resizable implements Observed, AxisOptions {
     this.on('textChange', this.onTextChange)
 
     this.on('resize', e => {
-      const { originalValue = [0, 0], target, resizeX, resizeY } = e as ResizeEvent<number[]>
+      const { originalValue = [0, 0], target, movementX, movementY } = e as ResizeEvent<number[]>
       if (target === this.$startAnchor) {
-        this.startPoint = [originalValue[0] + resizeX, originalValue[1] + resizeY]
+        this.startPoint = [originalValue[0] + movementX, originalValue[1] + movementY]
       } else if (target === this.$endAnchor) {
-        this.endPoint = [originalValue[0] + resizeX, originalValue[1] + resizeY]
+        this.endPoint = [originalValue[0] + movementX, originalValue[1] + movementY]
       }
     })
   }

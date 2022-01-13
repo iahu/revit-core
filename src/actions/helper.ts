@@ -188,3 +188,20 @@ export const delay = (ms: number) => {
     setTimeout(resolve, ms)
   })
 }
+
+// eslint-disable-next-line @typescript-eslint/no-empty-function
+export function noop() {}
+
+export const isSnaped = (point: Vector2d, target: Vector2d, distance: number) => {
+  return Math.hypot(point.x - target.x, point.y - target.y) < distance
+}
+
+export const useSnap = (points: Vector2d[], distance = 5, point: Vector2d) => {
+  for (let i = 0; i < points.length; ++i) {
+    const targetPoint = points[i]
+    if (isSnaped(targetPoint, point, distance)) {
+      return targetPoint
+    }
+  }
+  return point
+}

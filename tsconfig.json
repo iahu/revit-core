@@ -17,7 +17,6 @@
     "resolveJsonModule": true,
     "esModuleInterop": true,
     "baseUrl": "./src",
-    "incremental": true,
     "paths": {
       "Bluebird": ["bluebird"],
       "@actions/index": ["./actions/index"],

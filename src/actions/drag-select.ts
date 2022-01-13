@@ -51,8 +51,8 @@ export const dragSelect = (layer: Layer) => {
     const mouseupEvent = await mouseInput(stage, 'mouseup').then(stopMove)
 
     const shapes = layer.children ?? []
-    const clientConfig = { skipShadow: true, skipStroke: true }
-    const box = selectionRect.getClientRect(clientConfig)
+    const rectConfig = { skipShadow: true, skipStroke: true }
+    const box = selectionRect.getClientRect(rectConfig)
     selectionRect.destroy()
 
     // fallback to click
@@ -67,7 +67,7 @@ export const dragSelect = (layer: Layer) => {
 
     const result = shapes
       .filter(isSelectable)
-      .filter(shape => Konva.Util.haveIntersection(box, shape.getClientRect(clientConfig)))
+      .filter(shape => Konva.Util.haveIntersection(box, shape.getClientRect(rectConfig)))
 
     resolve(result as ShapeOrGroup[])
   })

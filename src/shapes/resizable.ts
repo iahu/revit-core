@@ -2,6 +2,7 @@ import { isString } from '@actions/helper'
 import { ContainerConfig } from 'konva/lib/Container'
 import { KonvaEventObject } from 'konva/lib/Node'
 import { Vector2d } from 'konva/lib/types'
+import { snap } from './helper'
 import Komponent, { KomponentOptions } from './komponent'
 import { attr } from './observer'
 
@@ -14,8 +15,8 @@ type ResizeData<Value = any> = {
   offsetX: number
   offsetY: number
   /** x 轴改变的尺寸大小 */
-  resizeX: number
-  resizeY: number
+  movementX: number
+  movementY: number
   pointerX: number
   pointerY: number
 }
@@ -27,14 +28,32 @@ export type ResizeEvent<Value = any> =
 export interface ResizableOptions extends KomponentOptions {
   resizable?: boolean
   resizeAttrs?: string | string[]
+  /**
+   * 距离捕捉
+   * @TODO 自定义捕捉目标
+   */
+  snapDistance?: number
+}
+
+const getValue = (target: Komponent, key: string) => {
+  if (Reflect.has(target, key)) {
+    const value = Reflect.get(target, key)
+    if (typeof value === 'function') {
+      return Reflect.apply(value, target, [])
+    }
+    return value
+  } else if (Reflect.has(target.attrs, key)) {
+    return target.attrs[key]
+  }
 }
 
 export class Resizable extends Komponent implements ResizableOptions {
-  @attr<Resizable, 'resizable'>() resizable = true
+  @attr() resizable = true
   /**
    * resizeStart 时记录当前元素 resizeAttrs 属性[列表]的值(或字典)
    */
-  @attr<Resizable, 'resizeAttrs'>() resizeAttrs: string[] | string | undefined
+  @attr() resizeAttrs = 'absolutePosition' as string[] | string | undefined
+  @attr() snapDistance = 5
 
   #resizeData: ResizeData | undefined
 
@@ -52,7 +71,7 @@ export class Resizable extends Komponent implements ResizableOptions {
           .flatMap(r => r)
           .filter(r => r)
           .reduce((o, key) => {
-            const value = this.attrs[key]
+            const value = getValue(this, key)
             o[key] = value === undefined ? value : JSON.parse(JSON.stringify(value))
             return o
           }, {} as Record<string, any>)
@@ -63,8 +82,8 @@ export class Resizable extends Komponent implements ResizableOptions {
           startY: start.y,
           offsetX: start.x - pos.x,
           offsetY: start.y - pos.y,
-          resizeX: 0,
-          resizeY: 0,
+          movementX: 0,
+          movementY: 0,
           pointerX: start.x,
           pointerY: start.y,
         }
@@ -78,15 +97,22 @@ export class Resizable extends Komponent implements ResizableOptions {
       const resizeData = this.#resizeData
       if (stage && this.resizable && resizeData) {
         const end = stage.getPointerPosition() as Vector2d
+        const { snapDistance: dist } = this
+        /**
+         * @TODO 除了 startX/Y 之外，可从外部传入数据进行捕捉匹配
+         */
+        end.x = snap(resizeData.startX, end.x, dist)
+        end.y = snap(resizeData.startY, end.y, dist)
+
         this.fire('resize', {
           ...e,
           type: 'resize',
           ...resizeData,
           pointerX: end.x,
           pointerY: end.y,
-          resizeX: end.x - resizeData.startX,
-          resizeY: end.y - resizeData.startY,
-        })
+          movementX: end.x - resizeData.startX,
+          movementY: end.y - resizeData.startY,
+        } as ResizeEvent)
       }
     })
 
