@@ -17,7 +17,7 @@ export default {
     typescript({
       typescript: ttypescript,
       tsconfig: './tsconfig.json',
-      noEmitOnError: process.env.NODE_EN === 'production',
+      noEmitOnError: process.env.NODE_ENV === 'production',
     }),
     multiInput(),
     image(),

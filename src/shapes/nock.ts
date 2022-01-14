@@ -3,7 +3,7 @@ import { ContainerConfig } from 'konva/lib/Container'
 import { KonvaEventObject } from 'konva/lib/Node'
 import { Circle } from 'konva/lib/shapes/Circle'
 import { Line } from 'konva/lib/shapes/Line'
-import { asc, clip } from './helper'
+import { asc, clamp } from './helper'
 import { attr, Observed } from './observer'
 import { Resizable, ResizeEvent } from './resizable'
 
@@ -116,11 +116,11 @@ export class Nock extends Resizable implements Observed, NockOptions {
       const point = [nockPoint[0] + movementX, nockPoint[1] + movementY]
       if (this.limitX) {
         const [min, max] = this.computedLimitX
-        point[0] = clip(min, max, point[0])
+        point[0] = clamp(min, max, point[0])
       }
       if (this.limitY) {
         const [min, max] = this.computedLimitY
-        point[1] = clip(min, max, point[1])
+        point[1] = clamp(min, max, point[1])
       }
       this.nockPoint = point
       const { followerPoint = '' } = this

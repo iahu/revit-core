@@ -1,12 +1,11 @@
-import { isString } from '@actions/helper'
+import { isString, SnapSides, useSnap } from '@actions/helper'
 import { ContainerConfig } from 'konva/lib/Container'
 import { KonvaEventObject } from 'konva/lib/Node'
 import { Vector2d } from 'konva/lib/types'
-import { snap } from './helper'
 import Komponent, { KomponentOptions } from './komponent'
 import { attr } from './observer'
 
-type ResizeData<Value = any> = {
+export type ResizeData<Value = any> = {
   originalValue?: Value
   /** 起始点 x 坐标 */
   startX: number
@@ -19,11 +18,13 @@ type ResizeData<Value = any> = {
   movementY: number
   pointerX: number
   pointerY: number
+  snaped?: SnapSides | boolean
+  timestamp?: number
 }
 
 export type ResizeEvent<Value = any> =
   | (KonvaEventObject<UIEvent> & ResizeData<Value>)
-  | ({ target: Komponent } & ResizeData<Value>)
+  | ({ target: Resizable } & ResizeData<Value>)
 
 export interface ResizableOptions extends KomponentOptions {
   resizable?: boolean
@@ -33,6 +34,12 @@ export interface ResizableOptions extends KomponentOptions {
    * @TODO 自定义捕捉目标
    */
   snapDistance?: number
+  snapSides?: SnapSides
+  snapPoints?: Vector2d[]
+  /**
+   * 全局捕捉 `SnapButton`
+   */
+  globalSnap?: boolean
 }
 
 const getValue = (target: Komponent, key: string) => {
@@ -50,12 +57,33 @@ const getValue = (target: Komponent, key: string) => {
 export class Resizable extends Komponent implements ResizableOptions {
   @attr() resizable = true
   /**
-   * resizeStart 时记录当前元素 resizeAttrs 属性[列表]的值(或字典)
+   * 1. 传 string[] resizeEvent.originalValue 为对象的 key
+   * 2. 传 string 则 resizeEvent.originalValue 为其对应的值
    */
   @attr() resizeAttrs = 'absolutePosition' as string[] | string | undefined
   @attr() snapDistance = 5
+  @attr() snapSides = 'any' as SnapSides
+  @attr() snapPoints: Vector2d[] | undefined
+  @attr() globalSnap = true
 
-  #resizeData: ResizeData | undefined
+  resizeData: ResizeData | undefined
+
+  getSnapPoints(): Vector2d[] {
+    return this.attrs.snapPoints ?? []
+  }
+
+  /**
+   * 全局捕捉点
+   */
+  protected globalPoints = [] as Vector2d[]
+
+  get computedSnapPoints(): Vector2d[] {
+    const { globalSnap, snapPoints = [], globalPoints } = this
+    if (globalSnap) {
+      return [...snapPoints, ...globalPoints]
+    }
+    return snapPoints
+  }
 
   constructor(options?: ResizableOptions & ContainerConfig) {
     super(options)
@@ -63,6 +91,7 @@ export class Resizable extends Komponent implements ResizableOptions {
     this.on('dragstart', e => {
       const { target } = e
       const stage = target.getStage()
+
       if (stage && this.resizable) {
         const start = stage.getPointerPosition() as Vector2d
         const pos = target.getAbsolutePosition()
@@ -76,7 +105,7 @@ export class Resizable extends Komponent implements ResizableOptions {
             return o
           }, {} as Record<string, any>)
 
-        this.#resizeData = {
+        this.resizeData = {
           originalValue: isString(resizeAttrs) ? originalValue[resizeAttrs] : originalValue,
           startX: start.x,
           startY: start.y,
@@ -86,39 +115,46 @@ export class Resizable extends Komponent implements ResizableOptions {
           movementY: 0,
           pointerX: start.x,
           pointerY: start.y,
+          snaped: false,
+          timestamp: Date.now(),
         }
 
         this.fire('resizeStart', { ...e, type: 'resizeStart' })
+
+        if (this.globalSnap) {
+          this.globalPoints = stage.find('SnapButton').map(b => b.getAbsolutePosition())
+        }
       }
     })
 
     this.on('dragmove', e => {
       const stage = e.target.getStage()
-      const resizeData = this.#resizeData
+      const resizeData = this.resizeData
       if (stage && this.resizable && resizeData) {
-        const end = stage.getPointerPosition() as Vector2d
-        const { snapDistance: dist } = this
-        /**
-         * @TODO 除了 startX/Y 之外，可从外部传入数据进行捕捉匹配
-         */
-        end.x = snap(resizeData.startX, end.x, dist)
-        end.y = snap(resizeData.startY, end.y, dist)
+        const pos = stage.getPointerPosition() as Vector2d
+        const { snapDistance: dist, snapSides } = this
 
-        this.fire('resize', {
+        const end = useSnap(this.computedSnapPoints, dist, pos, snapSides)
+        this.resizeData = {
           ...e,
-          type: 'resize',
           ...resizeData,
           pointerX: end.x,
           pointerY: end.y,
-          movementX: end.x - resizeData.startX,
-          movementY: end.y - resizeData.startY,
-        } as ResizeEvent)
+          movementX: end.x - resizeData.startX + resizeData.offsetX,
+          movementY: end.y - resizeData.startY + resizeData.offsetY,
+          snaped: end.snapSides,
+          timestamp: Date.now(),
+        }
+        this.fire('resize', this.resizeData)
+        if (end.snapSides) {
+          this.fire('snap', this.resizeData)
+        }
       }
     })
 
     this.on('dragend', e => {
       if (this.resizable) {
-        this.#resizeData = undefined
+        this.resizeData = undefined
         this.fire('resizeEnd', { ...e, type: 'resizeEnd' })
       }
     })

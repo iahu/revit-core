@@ -7,6 +7,7 @@ import { fireChangeEvent } from './helper'
 import { Level } from './level'
 import { attr, ChangedProp, Observed } from './observer'
 import { Resizable, ResizeEvent } from './resizable'
+import { SnapButton } from './snap-button'
 
 export interface ElevationOptions {
   flagWidth?: number
@@ -29,14 +30,14 @@ export class Elevation extends Resizable implements Observed {
   $level = new Level({ name: 'elevation-level unselectable' })
   $flagLabel = new FlagLabel({ name: 'elevation-label' })
 
-  $startDot = new Circle({
+  $startDot = new SnapButton({
     name: 'elevation-level-start-dot',
     radius: this.dotRadius,
     lockY: true,
     hitStrokeWidth: 3,
     fill: '#ffffff00',
   })
-  $endDot = new Circle({
+  $endDot = new SnapButton({
     name: 'elevation-level-end-dot',
     radius: this.dotRadius,
     lockY: true,

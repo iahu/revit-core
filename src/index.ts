@@ -1,6 +1,6 @@
 import { KAD_ACTION_NS, SELECTED_CLASSNAME } from '@actions/helper'
 import { onEsc } from '@actions/input'
-import { ContainerTypes, query } from '@helpers/query'
+import { ContainerTypes, query } from '@api/query'
 import Bluebird from 'bluebird'
 import Konva from 'konva'
 import * as actions from './actions'

@@ -26,7 +26,7 @@ export const dragSelect = (layer: Layer) => {
     let delayId: NodeJS.Timeout
     const stopMove = listenOn(stage, 'mousemove', e => {
       // delay to display selection rectangle.
-      delayId = setTimeout(() => selectionRect.visible(true), 50)
+      delayId = setTimeout(() => selectionRect.visible(true), 100)
 
       const endPoint = usePoinerPosition(e.target)
       selectionRect.width(endPoint.x - startPoint.x)

@@ -7,6 +7,7 @@ import { Vector2d } from 'konva/lib/types'
 import { asc } from './helper'
 import { attr, Observed } from './observer'
 import { Resizable, ResizeEvent } from './resizable'
+import { SnapButton } from './snap-button'
 
 export interface SegmentOptions {
   /**
@@ -128,8 +129,8 @@ export class Segment extends Resizable implements Observed, SegmentOptions {
   }
 
   $line = new Line({ name: 'nock-line unselectable', hitStrokeWidth: 3 })
-  $startDot = new Circle({ name: 'nock-line start-dot', hitStrokeWidth: 3, resizeAttrs: ['startPoint'] })
-  $endDot = new Circle({ name: 'nock-line end-dot', hitStrokeWidth: 3, resizeAttrs: ['endPoint'] })
+  $startDot = new SnapButton({ name: 'nock-line start-dot', hitStrokeWidth: 3, resizeAttrs: ['startPoint'] })
+  $endDot = new SnapButton({ name: 'nock-line end-dot', hitStrokeWidth: 3, resizeAttrs: ['endPoint'] })
 
   update() {
     const {

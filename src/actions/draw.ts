@@ -154,6 +154,7 @@ export const draw = (layer: Layer, options = {} as DrawOptions) => {
         addShape()
         snapButtons.forEach(b => b.moveToTop())
         afterStart(updateArgs)
+        snapButtons.forEach(b => b.moveToTop())
         onCancel?.(() => {
           if ($create.isPending()) {
             shape.destroy()

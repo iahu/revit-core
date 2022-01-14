@@ -1,9 +1,7 @@
-import { closest } from '@shapes/helper'
 import { ShapeOrKomponent } from '@shapes/index'
 import Komponent from '@shapes/komponent'
 import Bluebird from 'bluebird'
 import Konva from 'konva'
-import { Container } from 'konva/lib/Container'
 import { Group } from 'konva/lib/Group'
 import { Layer } from 'konva/lib/Layer'
 import { KonvaEventObject } from 'konva/lib/Node'
@@ -192,16 +190,53 @@ export const delay = (ms: number) => {
 // eslint-disable-next-line @typescript-eslint/no-empty-function
 export function noop() {}
 
-export const isSnaped = (point: Vector2d, target: Vector2d, distance: number) => {
-  return Math.hypot(point.x - target.x, point.y - target.y) < distance
+export type SnapSides = 'x' | 'y' | 'both' | 'any'
+const _isSnap = (a: number, b: number, distance: number, sides: SnapSides) => {
+  return Math.abs(a - b) < distance ? sides : false
 }
 
-export const useSnap = (points: Vector2d[], distance = 5, point: Vector2d) => {
+export const isSnaped = (point: Vector2d, target: Vector2d, distance: number, snapSides = 'any' as SnapSides) => {
+  const snapX = _isSnap(point.x, target.x, distance, 'x')
+  const snapY = _isSnap(point.y, target.y, distance, 'y')
+
+  if (snapSides === 'x') {
+    return snapX
+  }
+  if (snapSides === 'y') {
+    return snapY
+  }
+  if (snapX && snapY) return 'both'
+  if (snapSides === 'any') {
+    return snapX || snapY
+  }
+  return false
+}
+
+export type SnapVector2d = Vector2d & { snapSides?: SnapSides }
+export const useSnap = (
+  points: Vector2d[],
+  distance: number,
+  point: Vector2d,
+  snapSides = 'both' as SnapSides,
+): SnapVector2d => {
+  const result = { ...point } as SnapVector2d
   for (let i = 0; i < points.length; ++i) {
-    const targetPoint = points[i]
-    if (isSnaped(targetPoint, point, distance)) {
-      return targetPoint
+    const target = points[i]
+    const side = isSnaped(target, point, distance, snapSides)
+    if (side === 'both') {
+      return { ...target, snapSides: side }
+    }
+    if (side === 'x') {
+      result.x = target.x
+      // 与之前结果合并
+      if (result.snapSides === 'y') result.snapSides = 'both'
+    }
+    if (side === 'y') {
+      result.y = target.y
+      // 与之前结果合并
+      if (result.snapSides === 'x') result.snapSides = 'both'
     }
   }
-  return point
+
+  return result
 }

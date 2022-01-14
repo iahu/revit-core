@@ -1,13 +1,14 @@
 import { isString } from '@actions/helper'
-import { hitStrokeWidth } from '../config'
 import Konva from 'konva'
 import { ContainerConfig } from 'konva/lib/Container'
 import { KonvaEventObject } from 'konva/lib/Node'
-import { Circle } from 'konva/lib/shapes/Circle'
+import { hitStrokeWidth } from '../config'
 import { DEG_TO_RAD } from './helper'
+import Komponent from './komponent'
 import { Level } from './level'
 import { attr, ChangedProp, Observed } from './observer'
 import { Resizable, ResizeEvent } from './resizable'
+import { SnapButton } from './snap-button'
 import { TextCircle } from './text-circle'
 
 export type Point = number[]
@@ -39,6 +40,23 @@ export class Axis extends Resizable implements Observed, AxisOptions {
   @attr() endPointLabel: string | undefined
   @attr() resizable = true
   @attr() keepDirection = true
+
+  constructor(options: AxisOptions & ContainerConfig) {
+    super(options)
+    this.setAttrs(options)
+
+    this.on('textChange', this.onTextChange)
+
+    this.on('resize', e => {
+      const { originalValue = [0, 0], target, movementX, movementY } = e as ResizeEvent<number[]>
+      const point = [originalValue[0] + movementX, originalValue[1] + movementY]
+      if (target === this.$startAnchor) {
+        this.startPoint = point
+      } else if (target === this.$endAnchor) {
+        this.endPoint = point
+      }
+    })
+  }
 
   getWidth() {
     const {
@@ -81,31 +99,21 @@ export class Axis extends Resizable implements Observed, AxisOptions {
     }
   }
 
-  constructor(options: AxisOptions & ContainerConfig) {
-    super(options)
-    this.setAttrs(options)
-
-    this.on('textChange', this.onTextChange)
-
-    this.on('resize', e => {
-      const { originalValue = [0, 0], target, movementX, movementY } = e as ResizeEvent<number[]>
-      if (target === this.$startAnchor) {
-        this.startPoint = [originalValue[0] + movementX, originalValue[1] + movementY]
-      } else if (target === this.$endAnchor) {
-        this.endPoint = [originalValue[0] + movementX, originalValue[1] + movementY]
-      }
-    })
-  }
-
   $level = new Level({ name: 'axis-level unselectable' })
   $startLabel = new TextCircle({ name: 'axis-label start-label unselectable' })
   $endLabel = new TextCircle({ name: 'axis-label end-label unselectable' })
-  $startAnchor = new Circle({
+  $startAnchor = new SnapButton({
     name: 'axis-anchor start-anchor unselectable',
     resizeAttrs: 'startPoint',
     hitStrokeWidth,
+    resizabel: true,
   })
-  $endAnchor = new Circle({ name: 'axis-anchor end-anchor unselectable', resizeAttrs: 'endPoint', hitStrokeWidth })
+  $endAnchor = new SnapButton({
+    name: 'axis-anchor end-anchor unselectable',
+    resizeAttrs: 'endPoint',
+    hitStrokeWidth,
+    resizable: true,
+  })
 
   onTextChange(e: KonvaEventObject<Event>) {
     this.label = (e as KonvaEventObject<Event> & ChangedProp).newVal

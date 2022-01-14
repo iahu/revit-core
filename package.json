@@ -4,7 +4,7 @@
   "scripts": {
     "dev": "vite --port 3000",
     "build": "vite build && npm run build:esm",
-    "build:esm": "rollup --config rollup.config.js",
+    "build:esm": "cross-env NODE_ENV='production' rollup --config rollup.config.js",
     "serve": "vite preview",
     "watch": "yarn build:esm --watch",
     "test": "npm run build:esm",

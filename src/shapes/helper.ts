@@ -77,7 +77,7 @@ export const fireChangeEvent = <T extends Konva.Node, K extends string & keyof T
 }
 
 export const asc = (a: number, b: number) => a - b
-export const clip = (min: number, max: number, n: number) => Math.min(max, Math.max(n, min))
+export const clamp = (min: number, max: number, n: number) => Math.min(max, Math.max(n, min))
 
 export const snap = (oldValue: number, newValue: number, dist: number) =>
   Math.abs(newValue - oldValue) < Math.abs(dist) ? oldValue : newValue
