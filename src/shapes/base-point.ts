@@ -1,9 +1,8 @@
 import { ContainerConfig } from 'konva/lib/Container'
-import { KonvaEventObject } from 'konva/lib/Node'
 import { Arrow } from 'konva/lib/shapes/Arrow'
 import CrossCircle from './cross-circle'
 import Komponent from './komponent'
-import { attr, ChangedProp } from './observer'
+import { attr } from './observer'
 
 export interface BasePointOptions {
   radius?: number
@@ -29,8 +28,8 @@ export class BasePoint extends Komponent {
     const { stroke, strokeWidth, radius, axisLength, showAxis, selected } = this.getAttrs()
     this.$crossCircle.setAttrs({ stroke, strokeWidth, radius })
     const visible = showAxis || selected
-    this.$xAxis.setAttrs({ stroke: 'red', strokeWidth, offsetY: radius, points: [0, 0, 0, -axisLength], visible })
-    this.$yAxis.setAttrs({ stroke: 'green', strokeWidth, offsetX: radius, points: [0, 0, -axisLength, 0], visible })
+    this.$xAxis.setAttrs({ stroke: 'red', strokeWidth, offsetX: -radius, points: [0, 0, axisLength, 0], visible })
+    this.$yAxis.setAttrs({ stroke: 'green', strokeWidth, offsetY: radius, points: [0, 0, 0, -axisLength], visible })
   }
 
   render() {

@@ -1,16 +1,16 @@
+import { point2Vector } from '@actions/helper'
 import { Circle } from 'konva/lib/shapes/Circle'
-import { Vector2d } from 'konva/lib/types'
 import { AuxLine } from './aux-line'
 import Komponent from './komponent'
 import { LabelArc } from './label-arc'
-import { Observed, attr } from './observer'
+import { attr, Observed } from './observer'
 
 export interface AnglerOptions {
   stroke?: string
   strokeWidth?: number
-  centerPoint?: Vector2d
-  startPoint?: Vector2d
-  endPoint?: Vector2d
+  centerPoint?: number[]
+  startPoint?: number[]
+  endPoint?: number[]
   centerCircleVisible?: boolean
   centerCircleRadius?: number
   auxLineMaxWidth?: number
@@ -20,9 +20,9 @@ export class Angler extends Komponent implements Observed, AnglerOptions {
   @attr<Angler, 'stroke'>() stroke = '#0099ff'
   @attr<Angler, 'strokeWidth'>() strokeWidth = 1
 
-  @attr<Angler, 'centerPoint'>() centerPoint: Vector2d
-  @attr<Angler, 'startPoint'>() startPoint: Vector2d
-  @attr<Angler, 'endPoint'>() endPoint: Vector2d
+  @attr<Angler, 'startPoint'>() startPoint: number[]
+  @attr<Angler, 'centerPoint'>() centerPoint: number[]
+  @attr<Angler, 'endPoint'>() endPoint: number[]
   @attr<Angler, 'centerCircleVisible'>() centerCircleVisible: boolean
   @attr<Angler, 'centerCircleRadius'>() centerCircleRadius: number
   @attr<Angler, 'auxLineMaxWidth'>() auxLineMaxWidth: number | undefined
@@ -70,13 +70,12 @@ export class Angler extends Komponent implements Observed, AnglerOptions {
       })
     }
     if (centerPoint && startPoint && endPoint) {
-      this.labelArc.setAttrs({ fill: stroke, centerPoint, startPoint, endPoint })
+      this.labelArc.setAttrs({ stroke, centerPoint, startPoint, endPoint })
     }
 
     if (centerPoint) {
       this.centerCircle.setAttrs({
-        x: centerPoint.x,
-        y: centerPoint.y,
+        ...point2Vector(centerPoint),
         stroke,
         strokeWidth,
         visible: centerCircleVisible,

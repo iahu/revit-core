@@ -1,4 +1,6 @@
 import Konva from 'konva'
+import { ShapeConfig } from 'konva/lib/Shape'
+import { hitStrokeWidth } from '../config'
 import { attr } from './observer'
 
 export type Direction = 'horizontal' | 'vertical'
@@ -27,10 +29,10 @@ export class Level extends Konva.Shape {
   getClassName() {
     return this.constructor.name
   }
-  constructor(config?: LevelOptions) {
+  constructor(config?: LevelOptions & ShapeConfig) {
     super(config)
     this.className = this.getClassName()
-    this.setAttrs({ hitStrokeWidth: 5, ...config })
+    this.setAttrs({ hitStrokeWidth, ...config })
   }
 
   getWidth() {

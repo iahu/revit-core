@@ -6,10 +6,10 @@ import { closestSelectable, listenOn, Maybe } from './helper'
 let paths: Node[]
 const $attrs = document.createElement('pre')
 const $paths = document.createElement('div')
-const DEBUG = process.env.NODE_ENV === 'development' && localStorage.getItem('KAD_DEBUG')
+export const DEBUG = process.env.NODE_ENV === 'development' && !!localStorage.getItem('KAD_DEBUG')
 
 const renderAttrs = (node: Node) => {
-  $attrs.innerText = [node.constructor.name, JSON.stringify(node.getAttrs(), null, 2)].join('\n')
+  $attrs.innerText = [[node.constructor.name, node._id].join('#'), JSON.stringify(node.getAttrs(), null, 2)].join('\n')
 }
 
 const renderPaths = (paths: Node[]) => {

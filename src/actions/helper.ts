@@ -122,6 +122,7 @@ export const usePoinerPosition = (stageOrLayer: Stage | Layer | Shape) =>
   stageOrLayer.getStage()?.getPointerPosition() ?? { x: 0, y: 0 }
 
 export const vector2Point = (vector: Vector2d) => [vector?.x ?? 0, vector?.y ?? 0]
+export const point2Vector = (point: number[]) => ({ x: point[0], y: point[1] })
 
 const dev = process.env.NODE_ENV === 'development'
 export const logger = <T>(v: T) => {
@@ -213,19 +214,11 @@ export const isSnaped = (point: Vector2d, target: Vector2d, distance: number, sn
 }
 
 export type SnapVector2d = Vector2d & { snapSides?: SnapSides }
-export const useSnap = (
-  points: Vector2d[],
-  distance: number,
-  point: Vector2d,
-  snapSides = 'both' as SnapSides,
-): SnapVector2d => {
+export const useSnap = (points: Vector2d[], distance: number, snapSides: SnapSides, point: Vector2d): SnapVector2d => {
   const result = { ...point } as SnapVector2d
   for (let i = 0; i < points.length; ++i) {
     const target = points[i]
     const side = isSnaped(target, point, distance, snapSides)
-    if (side === 'both') {
-      return { ...target, snapSides: side }
-    }
     if (side === 'x') {
       result.x = target.x
       // 与之前结果合并
@@ -235,6 +228,9 @@ export const useSnap = (
       result.y = target.y
       // 与之前结果合并
       if (result.snapSides === 'x') result.snapSides = 'both'
+    }
+    if (side === 'both' || result.snapSides === 'both') {
+      return { ...target, snapSides: 'both' }
     }
   }
 

@@ -9,6 +9,7 @@ import { kadInput, mouseInput } from './input'
 import { pointAt } from './pick'
 import { setTitle } from './set-title'
 import { ShapeOrKomponent } from '@shapes/index'
+import { v2ToP2 } from '@shapes/vector'
 
 export interface RotateOptions {
   name?: string
@@ -40,8 +41,8 @@ export const rotate = (layer: Layer, rotateOptions = {} as RotateOptions) => {
       // update startPoint
       const stopUpdateStartPoint = listenOn(stage, 'mousemove', e => {
         const startPoint = usePoinerPosition(e.target)
-        angler.startPoint = startPoint
-        angler.endPoint = startPoint
+        angler.startPoint = v2ToP2(startPoint)
+        angler.endPoint = v2ToP2(startPoint)
       })
 
       onCancel?.(stopUpdateStartPoint)
@@ -57,7 +58,7 @@ export const rotate = (layer: Layer, rotateOptions = {} as RotateOptions) => {
         // update end aux end point
         const stopUpdateEndAuxLine = listenOn(stage, 'mousemove', e => {
           const endPoint = usePoinerPosition(e.target)
-          angler.endPoint = endPoint
+          angler.endPoint = v2ToP2(endPoint)
         })
 
         return mouseInput(stage, 'click').then(stopUpdateEndAuxLine).return(data)

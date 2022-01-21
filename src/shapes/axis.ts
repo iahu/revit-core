@@ -1,10 +1,10 @@
 import { isString } from '@actions/helper'
 import Konva from 'konva'
-import { ContainerConfig } from 'konva/lib/Container'
-import { KonvaEventObject } from 'konva/lib/Node'
+import { Container, ContainerConfig } from 'konva/lib/Container'
+import { KonvaEventObject, Node } from 'konva/lib/Node'
+import { Line } from 'konva/lib/shapes/Line'
 import { hitStrokeWidth } from '../config'
 import { DEG_TO_RAD } from './helper'
-import Komponent from './komponent'
 import { Level } from './level'
 import { attr, ChangedProp, Observed } from './observer'
 import { Resizable, ResizeEvent } from './resizable'
@@ -35,7 +35,7 @@ export class Axis extends Resizable implements Observed, AxisOptions {
   @attr() endPoint = [0, 0]
   @attr() label = '1'
   @attr() labelRadius = 14
-  @attr() anchorRadius = 4
+  @attr() anchorRadius = 3
   @attr() startPointLabel: string | undefined
   @attr() endPointLabel: string | undefined
   @attr() resizable = true
@@ -59,47 +59,48 @@ export class Axis extends Resizable implements Observed, AxisOptions {
   }
 
   getWidth() {
-    const {
-      labelRadius,
-      startPoint: [x1, y1],
-      endPoint: [x2, y2],
-    } = this
-    const { rotation, scaleX } = new Konva.Transform([x2 - x1, y2 - y1, 0, 0, 0, 0]).decompose()
-    // 斜线宽 + 两个外接圆的宽(圆心边线宽 + 2 * R)
-    return (2 * labelRadius + scaleX) * Math.cos(rotation * DEG_TO_RAD) + 2 * labelRadius
+    const startRect = this.$startLabel.getClientRect()
+    const endRect = this.$endLabel.getClientRect()
+    return Math.abs(endRect.x - startRect.x) + this.labelRadius * 2
   }
 
   getHeight() {
-    const {
-      labelRadius,
-      startPoint: [x1, y1],
-      endPoint: [x2, y2],
-    } = this
-    const { rotation, scaleX } = new Konva.Transform([x2 - x1, y2 - y1, 0, 0, 0, 0]).decompose()
-    // 斜线高 + 两个外接圆的高(圆心连线高 + 2 * R)
-    return (2 * labelRadius + scaleX) * Math.sin(rotation * DEG_TO_RAD) + 2 * labelRadius
+    const startRect = this.$startLabel.getClientRect()
+    const endRect = this.$endLabel.getClientRect()
+    return Math.abs(endRect.y - startRect.y) + this.labelRadius * 2
   }
 
-  getClientRect() {
+  getClientRect(config?: {
+    skipTransform?: boolean
+    skipShadow?: boolean
+    skipStroke?: boolean
+    relativeTo?: Container<Node>
+  }) {
+    const { skipTransform } = config ?? {}
+    const { labelRadius } = this
     const {
-      labelRadius,
       startPoint: [x1, y1],
       endPoint: [x2, y2],
     } = this
-    const { rotation } = new Konva.Transform([x2 - x1, y2 - y1, 0, 0, 0, 0]).decompose()
-    const sPos = this.$startLabel.getAbsolutePosition()
-    const ePos = this.$startLabel.getAbsolutePosition()
-    const pos = { x: Math.min(sPos.x, ePos.x), y: Math.min(sPos.y, ePos.y) }
+    const tr = new Konva.Transform([x2 - x1, y2 - y1, 0, 0, x1, y1])
+    const rad = tr.decompose().rotation * DEG_TO_RAD
+    const x = skipTransform ? 0 : this.x()
+    const y = skipTransform ? 0 : this.y()
 
     return {
-      x: pos.x - 2 * labelRadius * Math.cos(rotation * DEG_TO_RAD),
-      y: pos.y - 2 * labelRadius * Math.sin(rotation * DEG_TO_RAD),
+      x: x + Math.min(this.startPoint[0], this.endPoint[0]) - labelRadius - Math.cos(rad) * labelRadius,
+      y: y + Math.min(this.startPoint[1], this.endPoint[1]) - labelRadius - Math.sin(rad) * labelRadius,
       width: this.getWidth(),
       height: this.getHeight(),
     }
   }
 
-  $level = new Level({ name: 'axis-level unselectable' })
+  getSelfRect() {
+    return this.getClientRect()
+  }
+
+  $line = new Line({ name: 'axis-line unselectable', hitStrokeWidth })
+  $level = new Level({ name: 'axis-level unselectable', hitStrokeWidth })
   $startLabel = new TextCircle({ name: 'axis-label start-label unselectable' })
   $endLabel = new TextCircle({ name: 'axis-label end-label unselectable' })
   $startAnchor = new SnapButton({
@@ -141,6 +142,7 @@ export class Axis extends Resizable implements Observed, AxisOptions {
     const rad = rotation * DEG_TO_RAD
     const offsetX = radius * Math.cos(rad)
     const offsetY = radius * Math.sin(rad)
+    this.$line.setAttrs({ points: [x1, y1, x2, y2] })
     this.$level.setAttrs({ stroke, strokeWidth, startPoint, endPoint })
     this.$startLabel.setAttrs({
       stroke,
@@ -186,6 +188,6 @@ export class Axis extends Resizable implements Observed, AxisOptions {
   }
 
   render() {
-    return [this.$level, this.$startLabel, this.$endLabel, this.$startAnchor, this.$endAnchor]
+    return [this.$line, this.$level, this.$startLabel, this.$endLabel, this.$startAnchor, this.$endAnchor]
   }
 }

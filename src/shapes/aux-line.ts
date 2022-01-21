@@ -1,30 +1,28 @@
+import { point2Vector } from '@actions/helper'
 import Konva from 'konva'
 import { ContainerConfig } from 'konva/lib/Container'
-import { Vector2d } from 'konva/lib/types'
-import { vector2Point } from '../actions/helper'
 import Komponent from './komponent'
 import { attr } from './observer'
+import { ArrayVector } from './vector'
 
 export interface AuxLineOptions {
   stroke?: string
   strokeWidth?: number
   dash?: number[]
-  startPoint?: Vector2d
-  endPoint?: Vector2d
+  startPoint?: number[]
+  endPoint?: number[]
   label?: string
   labelOffset?: number
   direction?: 'x' | 'y'
   maxWidth?: number
 }
 
-const defaultPoint = { x: 0, y: 0 }
-
 export class AuxLine extends Komponent implements AuxLineOptions {
   @attr<AuxLine, 'stroke'>() stroke = '#3399ff'
   @attr<AuxLine, 'strokeWidth'>() strokeWidth = 1
   @attr<AuxLine, 'dash'>() dash = [3, 3]
-  @attr<AuxLine, 'startPoint'>() startPoint = defaultPoint
-  @attr<AuxLine, 'endPoint'>() endPoint = defaultPoint
+  @attr<AuxLine, 'startPoint'>() startPoint = [0, 0]
+  @attr<AuxLine, 'endPoint'>() endPoint = [0, 0]
   @attr<AuxLine, 'label'>() label = ''
   @attr<AuxLine, 'labelOffset'>() labelOffset = 6
   @attr<AuxLine, 'direction'>() direction = 'x' as const
@@ -38,21 +36,13 @@ export class AuxLine extends Komponent implements AuxLineOptions {
 
   update() {
     const { stroke, strokeWidth, startPoint, endPoint, label, labelOffset, maxWidth } = this
-    const tr = new Konva.Transform([
-      endPoint.x - startPoint.x,
-      endPoint.y - startPoint.y,
-      0,
-      1,
-      startPoint.x,
-      startPoint.y,
-    ])
+    const tr = new Konva.Transform([...ArrayVector.subtract(endPoint, startPoint).value, 0, 1, ...startPoint])
     const attrs = tr.decompose()
     const { scaleX, rotation } = attrs
     const maxScaleX = maxWidth && maxWidth >= 0 ? Math.min(maxWidth, scaleX) : scaleX
 
     this.line.setAttrs({
-      x: startPoint.x,
-      y: startPoint.y,
+      ...point2Vector(startPoint),
       stroke,
       strokeWidth,
       dash: this.dash,
@@ -62,8 +52,7 @@ export class AuxLine extends Komponent implements AuxLineOptions {
 
     if (label) {
       this.text.setAttrs({
-        x: startPoint.x,
-        y: startPoint.y,
+        ...point2Vector(startPoint),
         offsetY: -labelOffset,
         text: label ?? Math.abs(rotation).toFixed(2),
         width: Math.max(40, maxScaleX),
@@ -84,7 +73,7 @@ export class AuxLine extends Komponent implements AuxLineOptions {
 
   render() {
     const { stroke, strokeWidth, startPoint, endPoint } = this
-    const points = vector2Point(startPoint).concat(vector2Point(endPoint))
+    const points = [...startPoint, ...endPoint]
     this.line = new Konva.Line({
       name: 'unselectable',
       stroke,

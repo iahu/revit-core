@@ -1,4 +1,5 @@
 import Konva from 'konva'
+import { hitStrokeWidth } from '../config'
 import { attr } from './observer'
 
 export interface FlagOptions extends Konva.ShapeConfig {
@@ -20,7 +21,7 @@ export class Flag extends Konva.Shape {
     super(options)
 
     this.className = this.getClassName()
-    this.setAttrs({ width: 80, height: 10, strokeWidth: 1, hitStrokeWidth: 4, ...options })
+    this.setAttrs({ width: 80, height: 10, strokeWidth: 1, hitStrokeWidth, ...options })
   }
 
   _sceneFunc(ctx: Konva.Context) {

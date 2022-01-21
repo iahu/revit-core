@@ -1,8 +1,9 @@
+import { DEBUG } from '@actions/debug'
 import Konva from 'konva'
-import { getDraftLayer } from './draft'
+import { getBackgroundLayer } from './background'
 
 export const getTransformer = (stage: Konva.Stage) => {
-  const stageLayer = getDraftLayer(stage)
+  const stageLayer = getBackgroundLayer(stage)
   let transformer = stage.findOne('#global-transformer') as Konva.Transformer
 
   if (transformer) {
@@ -18,8 +19,8 @@ export const getTransformer = (stage: Konva.Stage) => {
     padding: 3,
     draggable: true,
     useSingleNodeRotation: false,
-    // borderStroke: '',
-    visible: false,
+    // borderStroke: 'blue',
+    visible: DEBUG && !!localStorage.getItem('KAD_TRANSFORMER'),
   })
 
   stageLayer.add(transformer)

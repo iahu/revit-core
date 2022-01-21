@@ -13,6 +13,11 @@ export default class CrossCircle extends Konva.Shape {
     return this.constructor.name
   }
 
+  getSelfRect() {
+    const { x = 0, y = 0, radius = 0 } = this.getAttrs()
+    return { x: x - radius, y: y - radius, width: radius * 2, height: radius * 2 }
+  }
+
   constructor(config?: CrossCircleOptions) {
     super(config)
 

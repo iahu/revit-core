@@ -1,7 +1,8 @@
-import { SELECTED_CLASSNAME } from '@actions/helper'
 import { ContainerConfig } from 'konva/lib/Container'
 import { KonvaEventObject } from 'konva/lib/Node'
-import { Circle } from 'konva/lib/shapes/Circle'
+import { Line } from 'konva/lib/shapes/Line'
+import { IRect, Vector2d } from 'konva/lib/types'
+import { hitStrokeWidth } from '../config'
 import { FlagLabel } from './flag-label'
 import { fireChangeEvent } from './helper'
 import { Level } from './level'
@@ -24,25 +25,25 @@ export class Elevation extends Resizable implements Observed {
   @attr<Elevation, 'title'>() title: string | undefined
   @attr<Elevation, 'label'>() label: string | undefined
   @attr<Elevation, 'resizable'>() resizable = true
-  @attr<Elevation, 'dotRadius'>() dotRadius = 4
-  @attr<Elevation, 'dotVisible'>() dotVisible = false
+  @attr<Elevation, 'dotRadius'>() dotRadius = 3
 
-  $level = new Level({ name: 'elevation-level unselectable' })
+  $bgLine = new Line({ name: 'elevation-line unselectable', hitStrokeWidth })
+  $level = new Level({ name: 'elevation-level unselectable', hitStrokeWidth })
   $flagLabel = new FlagLabel({ name: 'elevation-label' })
 
   $startDot = new SnapButton({
     name: 'elevation-level-start-dot',
     radius: this.dotRadius,
     lockY: true,
-    hitStrokeWidth: 3,
-    fill: '#ffffff00',
+    hitStrokeWidth,
+    resizeAttrs: ['x', 'width'],
   })
   $endDot = new SnapButton({
     name: 'elevation-level-end-dot',
     radius: this.dotRadius,
     lockY: true,
-    hitStrokeWidth: 3,
-    fill: '#ffffff00',
+    hitStrokeWidth,
+    resizeAttrs: ['x', 'width'],
   })
 
   constructor(options: ElevationOptions & ContainerConfig) {
@@ -51,28 +52,18 @@ export class Elevation extends Resizable implements Observed {
     this.setAttrs(options)
 
     this.on('resize', this.onResize)
-    this.on('mouseover', this.onMouseOver)
-    this.on('mouseout', this.onMouseOut)
   }
 
   onResize = (e: KonvaEventObject<Event>) => {
-    const { target, pointerX } = e as ResizeEvent
+    const { originalValue, target, movementX } = e as ResizeEvent<Vector2d>
+    const { x, width } = originalValue as IRect
     if (target === this.$startDot) {
-      target.y(0)
-      const { y } = this.getAbsolutePosition()
-      this.width(this.$endDot.getAbsolutePosition().x - pointerX)
-      this.setAbsolutePosition({ x: pointerX, y })
+      target.setPosition({ x: 0, y: 0 })
+      this.setAttrs({ x: x + movementX, width: width - movementX })
     } else if (target === this.$endDot) {
-      target.y(0)
-      this.width(this.$endDot.x() - this.$startDot.x())
+      target.setPosition({ x: x + movementX, y: 0 })
+      this.width(width + movementX)
     }
-  }
-
-  onMouseOver = () => {
-    this.dotVisible = true
-  }
-  onMouseOut = () => {
-    this.dotVisible = false
   }
 
   propDidUpdate(prop: ChangedProp) {
@@ -82,16 +73,17 @@ export class Elevation extends Resizable implements Observed {
   }
 
   update() {
-    const { flagWidth, flagHeight, title = '标高', label = '±0.00', resizable } = this
+    const { flagWidth, flagHeight, title = '标高', label = '±0.00', resizable, highlighted } = this
     const { width, stroke, strokeWidth } = this.getAttrs()
-    const dotVisible = this.hasName(SELECTED_CLASSNAME) || this.dotVisible
+
+    this.$bgLine.setAttrs({ points: [0, 0, width, 0] })
     this.$level.setAttrs({ endPoint: [width, 0], stroke, strokeWidth })
     this.$flagLabel.setAttrs({ x: width, width: flagWidth, height: flagHeight, stroke, strokeWidth, title, label })
-    this.$startDot.setAttrs({ x: 0, stroke, strokeWidth, opacity: Number(dotVisible), draggable: resizable })
-    this.$endDot.setAttrs({ x: width, stroke, strokeWidth, opacity: Number(dotVisible), draggable: resizable })
+    this.$startDot.setAttrs({ x: 0, stroke, strokeWidth, visible: highlighted, draggable: resizable })
+    this.$endDot.setAttrs({ x: width, stroke, strokeWidth, visible: highlighted, draggable: resizable })
   }
 
   render() {
-    return [this.$level, this.$flagLabel, this.$startDot, this.$endDot]
+    return [this.$bgLine, this.$level, this.$flagLabel, this.$startDot, this.$endDot]
   }
 }

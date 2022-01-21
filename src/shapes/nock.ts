@@ -1,11 +1,12 @@
 import Konva from 'konva'
 import { ContainerConfig } from 'konva/lib/Container'
 import { KonvaEventObject } from 'konva/lib/Node'
-import { Circle } from 'konva/lib/shapes/Circle'
 import { Line } from 'konva/lib/shapes/Line'
+import { hitStrokeWidth } from '../config'
 import { asc, clamp } from './helper'
 import { attr, Observed } from './observer'
 import { Resizable, ResizeEvent } from './resizable'
+import { SnapButton } from './snap-button'
 
 export interface NockOptions {
   startPoint?: number[]
@@ -128,7 +129,6 @@ export class Nock extends Resizable implements Observed, NockOptions {
       const followStartY = ['start', 'startY'].includes(followerPoint)
       const followEndX = ['start', 'endX'].includes(followerPoint)
       const followEndY = ['start', 'endY'].includes(followerPoint)
-
       this.startPoint = [startPoint[0] + movementX * +followStartX, startPoint[1] + movementY * +followStartY]
       this.endPoint = [endPoint[0] + movementX * +followEndX, endPoint[1] + movementY * +followEndY]
     } else if (target === this.$endDot) {
@@ -137,14 +137,20 @@ export class Nock extends Resizable implements Observed, NockOptions {
     }
   }
 
-  $line = new Line({ name: 'nock-line unselectable', hitStrokeWidth: 3 })
-  $startDot = new Circle({ name: 'nock-line start-dot', hitStrokeWidth: 3, resizeAttrs: ['startPoint'] })
-  $nockDot = new Circle({
-    name: 'nock-line nock-dot',
-    hitStrokeWidth: 3,
-    resizeAttrs: ['startPoint', 'endPoint', 'nockPoint'],
+  $line = new Line({ name: 'nock-line unselectable', hitStrokeWidth })
+  $startDot = new SnapButton({
+    name: 'nock-line start-dot',
+    hitStrokeWidth,
+    resizeAttrs: ['startPoint'],
+    ghost: false,
   })
-  $endDot = new Circle({ name: 'nock-line end-dot', hitStrokeWidth: 3, resizeAttrs: ['endPoint'] })
+  $nockDot = new SnapButton({
+    name: 'nock-line nock-dot',
+    hitStrokeWidth,
+    resizeAttrs: ['startPoint', 'endPoint', 'nockPoint'],
+    ghost: false,
+  })
+  $endDot = new SnapButton({ name: 'nock-line end-dot', hitStrokeWidth, resizeAttrs: ['endPoint'], ghost: false })
 
   update() {
     const {
@@ -180,6 +186,7 @@ export class Nock extends Resizable implements Observed, NockOptions {
       x: nockPoint[0],
       y: nockPoint[1],
       draggable,
+      visible: true,
     })
     this.$endDot.setAttrs({
       stroke,

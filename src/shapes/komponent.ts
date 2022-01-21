@@ -1,10 +1,17 @@
 import { ShapeOrGroup } from '@actions/helper'
 import Konva from 'konva'
-import { ContainerConfig } from 'konva/lib/Container'
+import { Container, ContainerConfig } from 'konva/lib/Container'
 import { Shape } from 'konva/lib/Shape'
+import { hitStrokeWidth, stroke } from '../config'
 import { attr, ChangedProp, observe, Observed } from './observer'
 
 export type ShapeOrKomponent = Shape | Komponent
+export type ContainerClientRectConfig = {
+  skipTransform?: boolean
+  skipShadow?: boolean
+  skipStroke?: boolean
+  relativeTo?: Container
+}
 
 const normalized = (result: (Konva.Group | Konva.Shape)[] | null) => {
   return result ? result.filter(v => !!v) : []
@@ -30,9 +37,9 @@ export interface KomponentOptions {
  */
 @observe
 export default class Komponent extends Konva.Group implements Observed, KomponentOptions {
-  @attr<Komponent, 'stroke'>() stroke = '#333'
+  @attr<Komponent, 'stroke'>() stroke = stroke
   @attr<Komponent, 'strokeWidth'>() strokeWidth = 1
-  @attr<Komponent, 'hitStrokeWidth'>() hitStrokeWidth = 3
+  @attr<Komponent, 'hitStrokeWidth'>() hitStrokeWidth = hitStrokeWidth
   @attr<Komponent, 'shadowColor'>() shadowColor = ''
   @attr<Komponent, 'shadowBlur'>() shadowBlur = 0
   @attr<Komponent, 'selected'>() selected = false
@@ -50,6 +57,7 @@ export default class Komponent extends Konva.Group implements Observed, Komponen
     this.setAttrs(config)
     this.updated.then(() => {
       this.__render()
+      this.setAttrs(config)
     })
   }
 
@@ -119,12 +127,14 @@ export default class Komponent extends Konva.Group implements Observed, Komponen
   /**
    * 依次执行 removeAll -> render -> update
    */
-  forceUpdate(callback = true) {
-    this.__hasRendered = false
+  forceUpdate(firstRender = false) {
+    if (firstRender) {
+      this.__hasRendered = false
+    }
     this.removeAllChildren()
     // this.remove()
-    this.__render()
-    if (!callback) {
+    this.__render(!firstRender)
+    if (!firstRender) {
       return
     }
     const updateCallback = Reflect.get(this, 'update')
@@ -172,8 +182,8 @@ export default class Komponent extends Konva.Group implements Observed, Komponen
     // empty function
   }
 
-  private __render() {
-    if (this.__hasRendered) {
+  private __render(force = false) {
+    if (this.__hasRendered && !force) {
       return
     }
 

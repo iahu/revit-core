@@ -1,16 +1,15 @@
 import Konva from 'konva'
-import { Vector2d } from 'konva/lib/types'
-import { vector2Point } from '../actions/helper'
-import { getScalar, toDeg180, toDeg360 } from './helper'
+import { toDeg180, toDeg360 } from './helper'
 import Komponent from './komponent'
-import { Observed, attr } from './observer'
+import { attr, Observed } from './observer'
+import { ArrayVector } from './vector'
 
 export interface LabelArcOptions {
   stroke?: string
   strokeWidth?: number
-  centerPoint?: Vector2d
-  startPoint?: Vector2d
-  endPoint?: Vector2d
+  centerPoint?: number[]
+  startPoint?: number[]
+  endPoint?: number[]
   radius?: number
 }
 
@@ -18,9 +17,9 @@ export class LabelArc extends Komponent implements Observed, LabelArcOptions {
   @attr<LabelArc, 'stroke'>() stroke = '#3399ff'
   @attr<LabelArc, 'strokeWidth'>() strokeWidth = 1
 
-  @attr<LabelArc, 'centerPoint'>() centerPoint = { x: 0, y: 0 } as Vector2d
-  @attr<LabelArc, 'startPoint'>() startPoint: Vector2d
-  @attr<LabelArc, 'endPoint'>() endPoint: Vector2d
+  @attr<LabelArc, 'centerPoint'>() centerPoint = [0, 0] as number[]
+  @attr<LabelArc, 'startPoint'>() startPoint: number[]
+  @attr<LabelArc, 'endPoint'>() endPoint: number[]
 
   @attr<LabelArc, 'radius'>() radius = 20
 
@@ -38,16 +37,16 @@ export class LabelArc extends Komponent implements Observed, LabelArcOptions {
     const { stroke, strokeWidth, centerPoint, startPoint, endPoint, radius: innerRadius } = this
 
     if (centerPoint && startPoint && endPoint) {
-      const startScalar = getScalar(centerPoint, startPoint)
-      const endScalar = getScalar(centerPoint, endPoint)
-      const centerScalar = vector2Point(centerPoint)
+      const startScalar = ArrayVector.subtract(startPoint, centerPoint)
+      const endScalar = ArrayVector.subtract(endPoint, centerPoint)
+      const centerScalar = centerPoint
 
       // Matrix of startPoint
       const startTr = new Konva.Transform([...startScalar, ...endScalar, ...centerScalar])
       const { rotation: startRotation } = startTr.decompose()
       // Matrix of endPoint
       const endTr = new Konva.Transform([...endScalar, ...startScalar, ...centerScalar])
-      const { x, y } = centerPoint
+      const [x, y] = centerPoint
       const { rotation: endRotation } = endTr.decompose()
 
       // angle between startPoint and endPont

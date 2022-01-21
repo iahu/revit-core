@@ -81,3 +81,28 @@ export const clamp = (min: number, max: number, n: number) => Math.min(max, Math
 
 export const snap = (oldValue: number, newValue: number, dist: number) =>
   Math.abs(newValue - oldValue) < Math.abs(dist) ? oldValue : newValue
+
+export const cloneMousemoveEvent = (event: MouseEvent, offset: Vector2d) => {
+  const { x: ox, y: oy } = offset
+  // prettier-ignore
+  const keys = ['isTrusted', 'altKey', 'bubbles', 'button', 'buttons', 'cancelBubble', 'cancelable', 'clientX', 'clientY', 'composed', 'ctrlKey', 'currentTarget', 'defaultPrevented', 'detail', 'eventPhase', 'fromElement', 'isTrusted', 'layerX', 'layerY', 'metaKey', 'movementX', 'movementY', 'offsetX', 'offsetY', 'pageX', 'pageY', 'path', 'relatedTarget', 'returnValue', 'screenX', 'screenY', 'shiftKey', 'sourceCapabilities', 'srcElement', 'target', 'timeStamp', 'toElement', 'type', 'view', 'which', 'x', 'y' ]
+  const result = {} as Record<PropertyKey, any>
+
+  keys.forEach(_key => {
+    const key = _key as keyof MouseEvent
+    const value = event[key]
+    const isNumber = typeof value === 'number'
+    if (isNumber && (key === 'x' || key.endsWith('X'))) {
+      result[key] = value + ox
+    } else if (isNumber && (key === 'y' || key.endsWith('Y'))) {
+      result[key] = value + oy
+    } else {
+      result[key] = value
+    }
+  })
+
+  return result
+}
+
+export const identity = <T = unknown>(arg: T): T => arg
+export const deepClone = <T = unknown>(value: T): T => (value === undefined ? value : JSON.parse(JSON.stringify(value)))

@@ -78,8 +78,6 @@ export default class Kad {
     this.draftLayer = getDraftLayer(this.stage)
 
     this.renderToKonva()
-    // 默认命令
-    this.execute('select')
     onEsc().then(this.cancelCurrentAction.bind(this))
   }
 

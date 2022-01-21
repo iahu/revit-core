@@ -1,13 +1,17 @@
+import { point2Vector } from '@actions/helper'
+import { query } from '@api/query'
 import Konva from 'konva'
 import { ContainerConfig } from 'konva/lib/Container'
 import { KonvaEventObject } from 'konva/lib/Node'
-import { Circle } from 'konva/lib/shapes/Circle'
 import { Line } from 'konva/lib/shapes/Line'
 import { Vector2d } from 'konva/lib/types'
+import { hitStrokeWidth } from '../config'
 import { asc } from './helper'
+import Komponent from './komponent'
 import { attr, Observed } from './observer'
 import { Resizable, ResizeEvent } from './resizable'
 import { SnapButton } from './snap-button'
+import { Vector } from './vector'
 
 export interface SegmentOptions {
   /**
@@ -80,14 +84,22 @@ export class Segment extends Resizable implements Observed, SegmentOptions {
       startPoint: [x1],
       endPoint: [x2],
       dotRadius,
-      highlighted,
     } = this
-    return Math.abs(x2 - x1) + Number(highlighted) * 2 * dotRadius
+    return Math.abs(x2 - x1) + dotRadius * 2
   }
 
   getHeight() {
-    const { startPoint, endPoint, dotRadius, highlighted } = this
-    return Math.abs(endPoint[1] - startPoint[1]) + Number(highlighted) * 2 * dotRadius
+    const { startPoint, endPoint, dotRadius } = this
+    return Math.abs(endPoint[1] - startPoint[1]) + dotRadius * 2
+  }
+
+  getSelfRect() {
+    return {
+      x: Math.min(this.startPoint[0], this.endPoint[0]),
+      y: Math.min(this.startPoint[1], this.endPoint[1]),
+      width: this.getWidth(),
+      height: this.getHeight(),
+    }
   }
 
   /**
@@ -104,9 +116,34 @@ export class Segment extends Resizable implements Observed, SegmentOptions {
 
   constructor(options?: SegmentOptions & ContainerConfig) {
     super(options)
-    this.setAttrs({ draggable: true, ...options })
+    this.setAttrs(options)
 
+    this.on('resizeStart', this.onResizeStart)
     this.on('resize', this.onResize)
+  }
+
+  get siblings() {
+    const stage = this.getStage()
+    if (stage) {
+      return query<Segment>(stage, 'Segment')
+    }
+    return []
+  }
+
+  private connectedSegments = [] as Segment[]
+
+  onResizeStart(e: KonvaEventObject<Event>) {
+    const { target } = e
+
+    if (target instanceof SnapButton) {
+      const index = target.parent?.index
+      const otherNodes = this.siblings.filter(n => n.index !== index)
+      const { x, y } = target.getAbsolutePosition()
+      const v = new Vector(x, y)
+      this.connectedSegments = otherNodes.filter(node => {
+        return v.equals(node.$startBtn.getAbsolutePosition()) || v.equals(node.$endBtn.getAbsolutePosition())
+      })
+    }
   }
 
   onResize(e: KonvaEventObject<Event>) {
@@ -115,22 +152,30 @@ export class Segment extends Resizable implements Observed, SegmentOptions {
     const mx = movementX * Number(!lockX)
     const my = movementY * Number(!lockY)
 
-    if (target === this.$startDot) {
+    if (target === this.$startBtn) {
       const startPoint = originalValue.startPoint
       this.startPoint = [startPoint[0] + mx, startPoint[1] + my]
-    } else if (target === this.$endDot) {
+    } else if (target === this.$endBtn) {
       const endPoint = originalValue.endPoint
       this.endPoint = [endPoint[0] + mx, endPoint[1] + my]
-    } else if (target === this) {
-      // 自身移动
+    }
+
+    if (target instanceof SnapButton) {
+      const { startX, startY, movementX, movementY } = e as ResizeEvent
+      this.connectedSegments.forEach(node => {
+        node.setAbsolutePosition({ x: startX + movementX, y: startY + movementY })
+      })
+    } else if (target === this.$line) {
       const { x, y } = originalValue as unknown as Vector2d
-      this.position({ x: x + mx, y: y + my })
+      const pos = { x: x + mx, y: y + my }
+      this.setAbsolutePosition(pos)
+      target.setAbsolutePosition(pos)
     }
   }
 
-  $line = new Line({ name: 'nock-line unselectable', hitStrokeWidth: 3 })
-  $startDot = new SnapButton({ name: 'nock-line start-dot', hitStrokeWidth: 3, resizeAttrs: ['startPoint'] })
-  $endDot = new SnapButton({ name: 'nock-line end-dot', hitStrokeWidth: 3, resizeAttrs: ['endPoint'] })
+  $line = new Line({ name: 'nock-line unselectable', hitStrokeWidth, draggable: true, resizeAttrs: 'absolutePosition' })
+  $startBtn = new SnapButton({ name: 'nock-line start-btn unselectable', hitStrokeWidth, resizeAttrs: ['startPoint'] })
+  $endBtn = new SnapButton({ name: 'nock-line end-btn unselectable', hitStrokeWidth, resizeAttrs: ['endPoint'] })
 
   update() {
     const {
@@ -151,7 +196,7 @@ export class Segment extends Resizable implements Observed, SegmentOptions {
 
     const interaction = selected || highlighted
     this.$line.setAttrs({ hitStrokeWidth, stroke, strokeWidth, points: [...startPoint, ...endPoint] })
-    this.$startDot.setAttrs({
+    this.$startBtn.setAttrs({
       stroke,
       strokeWidth,
       radius,
@@ -160,7 +205,7 @@ export class Segment extends Resizable implements Observed, SegmentOptions {
       draggable,
       visible: !lockStartPoint && interaction,
     })
-    this.$endDot.setAttrs({
+    this.$endBtn.setAttrs({
       stroke,
       strokeWidth,
       radius,
@@ -173,6 +218,6 @@ export class Segment extends Resizable implements Observed, SegmentOptions {
 
   render() {
     this.update()
-    return [this.$line, this.$startDot, this.$endDot]
+    return [this.$line, this.$startBtn, this.$endBtn]
   }
 }

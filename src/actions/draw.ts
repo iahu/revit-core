@@ -1,16 +1,20 @@
 import { createShape, Entity, EntityType, ShapeOrKomponent } from '@shapes/index'
 import Bluebird from 'bluebird'
+import { stroke } from '../config'
 import { Layer } from 'konva/lib/Layer'
 import { Vector2d } from 'konva/lib/types'
-import { delay, listenOn, noop, useEventTarget, usePoinerPosition, useSnap } from './helper'
+import { delay, listenOn, noop, SnapSides, useEventTarget, usePoinerPosition, useSnap } from './helper'
 import { mouseInput } from './input'
 import { setCursor } from './set-cursor'
 import { setTitle } from './set-title'
+import { query } from '@api/query'
+import { Shape } from 'konva/lib/Shape'
 
 export interface UpdateArgs {
   shape: ShapeOrKomponent
   startPosition: Vector2d
   endPosition: Vector2d
+  [key: string]: any
 }
 
 export const updatePosition = (args: UpdateArgs) => {
@@ -33,18 +37,18 @@ export const updateSize = (args: UpdateArgs) => {
 }
 
 export const updatePoints = (args: UpdateArgs) => {
-  const { shape, startPosition, endPosition } = args
+  const { shape, startPosition, endPosition, ...others } = args
   const points = shape.getAttr('points')
   const startPoint = shape.getAttr('startPoint')
   const endPoint = shape.getAttr('endPoint')
   const [x1, y1, x2, y2] = [startPosition.x, startPosition.y, endPosition.x, endPosition.y]
 
   if (points) {
-    shape.setAttr('points', [x1, y1, x2, y2])
+    shape.setAttrs({ points: [x1, y1, x2, y2], ...others })
   } else if (startPoint && endPoint) {
     const { x, y } = shape.getAbsolutePosition()
     // 相对定位，也许可以支持绝对定位
-    shape.setAttrs({ startPoint: [x1 - x, y1 - y], endPoint: [x2 - x, y2 - y] })
+    shape.setAttrs({ startPoint: args.startPoint ?? [x1 - x, y1 - y], endPoint: [x2 - x, y2 - y] })
   }
   return shape
 }
@@ -78,6 +82,13 @@ export interface DrawOptions {
   confirmEvent?: keyof GlobalEventHandlersEventMap | number
   /** 贪心模式 */
   greedy?: boolean
+
+  /**
+   * 开启自动捕捉
+   */
+  snap?: boolean
+  snapSides?: SnapSides
+  // 额外的捕捉点
   snapPoints?: Vector2d[]
   snapDistance?: number
 }
@@ -112,6 +123,8 @@ export const draw = (layer: Layer, options = {} as DrawOptions) => {
     confirmEvent = 'click',
     lockX,
     lockY,
+    snap = true,
+    snapSides = 'any',
     snapPoints: _snapPoints,
     snapDistance = 5,
   } = options
@@ -124,37 +137,47 @@ export const draw = (layer: Layer, options = {} as DrawOptions) => {
       return reject('no stage found')
     }
 
-    const shape = createShape({ ...shapeAttrs, type } as Entity)
+    const shape = createShape({ stroke, ...shapeAttrs, type } as Entity)
     if (!shape) {
       return reject(`invalid shape typpe: "${type}"`)
     }
 
     const addShape = () => {
       layer.add(shape)
+      shape.zIndex((layer.children as Shape[]).length - 1 - snapButtons.length)
       return shape
     }
+
+    const snapButtons = query(layer, '> SnapButton')
+    const snapPoints = _snapPoints ?? snapButtons.map(btn => btn.getAbsolutePosition())
+    const useSnapPoints = snap ? useSnap.bind(null, snapPoints, snapDistance, snapSides) : (p: Vector2d) => p
+
+    let $start: Bluebird<{ shape: ShapeOrKomponent; startPosition: Vector2d }>
     if (autoStart) {
-      addShape()
+      $start = Bluebird.resolve(addShape()).then(shape => {
+        return { shape, startPosition: shape.getAbsolutePosition() }
+      })
+    } else {
+      setTitle(layer, '点击以绘制图形')
+      setCursor(layer, 'crosshair')
+
+      snapButtons.forEach(b => b.moveToTop())
+      $start = mouseInput(stage, startEvent)
+        .then(useEventTarget)
+        .then(usePoinerPosition)
+        .then(useSnapPoints)
+        .then(startPosition => {
+          return { shape, startPosition }
+        })
     }
 
-    setTitle(layer, '点击以绘制图形')
-    setCursor(layer, 'crosshair')
-    const snapButtons = stage.find('SnapButton')
-    const snapPoints = _snapPoints ?? stage.find('SnapButton').map(btn => btn.getAbsolutePosition())
-    const useSnapPoints = useSnap.bind(null, snapPoints, snapDistance)
-
-    return mouseInput(stage, startEvent)
-      .then(useEventTarget)
-      .then(usePoinerPosition)
-      .then(useSnapPoints)
-      .then(startPosition => {
-        const updateArgs = { shape, startPosition, endPosition: startPosition }
+    return $start
+      .then(({ shape, startPosition }) => {
+        const updateArgs = { shape, startPosition, endPosition: startPosition, ...shapeAttrs }
         beforeStart(updateArgs)
         onStart(updateArgs)
         addShape()
-        snapButtons.forEach(b => b.moveToTop())
         afterStart(updateArgs)
-        snapButtons.forEach(b => b.moveToTop())
         onCancel?.(() => {
           if ($create.isPending()) {
             shape.destroy()

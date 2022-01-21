@@ -32,11 +32,12 @@ const getHighlightStyle = (node: Konva.Node) => {
   const attrs = node.getAttrs()
   const _backup = node.getAttr(BACKUP_ATTRS_KEY)
   const backupAttrs = _backup ? _backup : { fill: attrs.fill, stroke: attrs.stroke, opacity: attrs.opacity }
+  const highlightStroke = attrs.highlightStroke ?? HIGHLIGHT_COLOR
 
   const clone = {
     [BACKUP_ATTRS_KEY]: { fill: '', stroke: '', opacity: '', ...backupAttrs },
     name: node.hasName(HIGHLIGHT_CLASSNAME) ? node.name() : `${node.name()} ${HIGHLIGHT_CLASSNAME}`,
-    stroke: attrs.stroke && HIGHLIGHT_COLOR,
+    stroke: attrs.stroke && highlightStroke,
     fill: attrs.fill && HIGHLIGHT_FILL,
     // shadowColor: attrs.shadowColor ?? HIGHLIGHT_COLOR,
     // shadowBlur: 2,
@@ -44,7 +45,7 @@ const getHighlightStyle = (node: Konva.Node) => {
   }
 
   if (!attrs.stroke && !attrs.fill) {
-    clone.stroke = HIGHLIGHT_COLOR
+    clone.stroke = highlightStroke
   }
 
   return clone

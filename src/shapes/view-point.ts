@@ -1,4 +1,5 @@
 import Konva from 'konva'
+import { ContainerConfig } from 'konva/lib/Container'
 import { EditableText } from './editable-text'
 import Komponent from './komponent'
 import { attr, Observed } from './observer'
@@ -8,6 +9,7 @@ type Location = 'north' | 'east' | 'south' | 'west'
 
 export interface ViewPointOptions {
   radius?: number
+  stroke?: string | CanvasGradient
   innerRadius?: number
   strokeWidth?: number
   axisWidth?: number
@@ -16,6 +18,7 @@ export interface ViewPointOptions {
    * 基点本身的位置，与其朝向的位置正好相反
    */
   location?: Location
+  cornerRadius?: number | number[]
 }
 
 export class ViewPoint extends Komponent implements Observed, ViewPointOptions {
@@ -29,6 +32,11 @@ export class ViewPoint extends Komponent implements Observed, ViewPointOptions {
   $textInner = new EditableText({ name: 'base-point-text-inner unselectable', text: '-', readonly: true })
   $textOuter = new EditableText({ name: 'base-point-text-outer unselectable', text: '-', readonly: true })
   $axis = new Konva.Line({ name: 'base-point-axis unselectable', visible: false })
+
+  constructor(options: ViewPointOptions & ContainerConfig) {
+    super(options)
+    this.setAttrs(options)
+  }
 
   update() {
     const { radius, innerRadius, rotation = 0, stroke, strokeWidth, axisWidth, selected } = this.getAttrs()
@@ -56,7 +64,6 @@ export class ViewPoint extends Komponent implements Observed, ViewPointOptions {
   }
 
   render() {
-    // this.update()
     return [this.$pointer, this.$textInner, this.$textOuter, this.$axis]
   }
 }

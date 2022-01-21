@@ -1,4 +1,5 @@
 import Konva from 'konva'
+import { ShapeGetClientRectConfig } from 'konva/lib/Shape'
 import { DEG_TO_RAD } from './helper'
 import { attr } from './observer'
 
@@ -24,19 +25,24 @@ export class Pointer extends Konva.Shape {
   }
 
   getWidth() {
-    const rotation = this.getAttr('rotation') ?? 0
-    return Math.min(
-      this.getAttr('radius') * 2 * Math.cos(rotation * DEG_TO_RAD),
-      this.getAttr('radius') * 2.414 * Math.sin(rotation * DEG_TO_RAD),
-    )
+    return this.radius * 2
   }
 
   getHeight() {
-    const rotation = this.getAttr('rotation') ?? 0
-    return Math.max(
-      this.getAttr('radius') * 2 * Math.cos(rotation * DEG_TO_RAD),
-      this.getAttr('radius') * 2.414 * Math.sin(rotation * DEG_TO_RAD),
-    )
+    return this.radius * 2.414
+  }
+
+  getClientRect(config?: ShapeGetClientRectConfig) {
+    const { skipTransform = false } = config ?? {}
+    const x = skipTransform ? 0 : this.x()
+    const y = skipTransform ? 0 : this.y()
+
+    return {
+      x: x - this.radius,
+      y: y - this.radius,
+      width: this.getWidth(),
+      height: this.getHeight(),
+    }
   }
 
   _sceneFunc(ctx: Konva.Context & CanvasRenderingContext2D) {

@@ -23,51 +23,83 @@ import { Axis, AxisOptions } from './axis'
 import { Nock } from './nock'
 import { RectPointer, RectPointerOptions } from './rect-pointer'
 import { Segment } from './segment'
+import { Path, PathOptions } from './path'
+import { Angler, AnglerOptions } from './angler'
+import { CompassConfig } from './compass'
+import Assistor, { AssistorConfig } from './assistor'
 
 export type Position = [number, number]
 
 // build-in shapes
-export interface BaseEntity extends Konva.ShapeConfig {
+export interface BuildInEntity extends Konva.ShapeConfig {
   id?: string
   type: string
 }
 
-type CustomShape<Type extends EntityType, Inherit extends Konva.ShapeConfig = Konva.ShapeConfig> = BaseEntity &
+type BuildInShape<Type extends EntityType, Inherit extends Konva.ShapeConfig = Konva.ShapeConfig> = BuildInEntity &
+  Inherit & {
+    type: Type
+  }
+
+export interface CustomEntity extends Konva.ContainerConfig {
+  id?: string
+  type: string
+}
+
+type CustomShape<
+  Type extends EntityType,
+  Inherit extends Konva.ContainerConfig = Konva.ContainerConfig,
+> = CustomEntity &
   Inherit & {
     type: Type
   }
 
 export interface Shapes {
   // build in shapes
-  svgPath: CustomShape<'svgPath'>
-  imgUrl: CustomShape<'imgUrl', Omit<Konva.ImageConfig, 'image'> & { imgUrl: string }>
-  img: CustomShape<'img', Konva.ImageConfig & { image?: CanvasImageSource }>
-  text: CustomShape<'text', Konva.TextConfig>
-  line: CustomShape<'line', Konva.LineConfig>
-  rect: CustomShape<'rect', Konva.RectConfig>
-  circle: CustomShape<'circle', Konva.RectConfig>
+  svgPath: BuildInShape<'svgPath'>
+  imgUrl: BuildInShape<'imgUrl', Omit<Konva.ImageConfig, 'image'> & { imgUrl: string }>
+  img: BuildInShape<'img', Konva.ImageConfig & { image?: CanvasImageSource }>
+  text: BuildInShape<'text', Konva.TextConfig>
+  line: BuildInShape<'line', Konva.LineConfig>
+  rect: BuildInShape<'rect', Konva.RectConfig>
+  circle: BuildInShape<'circle', Konva.RectConfig>
 
   // custom shapes
-  editableText: CustomShape<'editableText', Konva.TextConfig & EditableTextOptions>
-  door: CustomShape<'door', DoorOptions>
+  angler: CustomShape<'angler', AnglerOptions>
+  assistor: CustomShape<'assistor', AssistorConfig>
+  axis: CustomShape<'axis', AxisOptions>
+
+  basePoint: CustomShape<'basePoint', BasePointOptions>
   bricks: CustomShape<'bricks', BricksConfig>
+
+  compass: CustomShape<'compass', CompassConfig>
+  crossCircle: CustomShape<'crossCircle', CrossCircleOptions>
+
+  door: CustomShape<'door', DoorOptions>
+
+  editableText: CustomShape<'editableText', Konva.TextConfig & EditableTextOptions>
+  elevation: CustomShape<'elevation', ElevationOptions>
+
   flag: CustomShape<'flag', FlagOptions>
   flagLabel: CustomShape<'flagLabel', FlagLabelOptions>
-  level: CustomShape<'level', LevelOptions>
-  elevation: CustomShape<'elevation', ElevationOptions>
   floorLevels: CustomShape<'floorLevels', FloorLevelsOptions>
+
+  imageFollow: CustomShape<'imageFollow'>
+
+  level: CustomShape<'level', LevelOptions>
+
+  nock: CustomShape<'nock', AxisOptions>
+
+  path: CustomShape<'path', PathOptions>
+  pointer: CustomShape<'pointer', PointerOptions>
+
+  rectPointer: CustomShape<'rectPointer', RectPointerOptions>
   ruler: CustomShape<'ruler', RulerConfig>
+
   snapButton: CustomShape<'snapButton'>
   selectBox: CustomShape<'selectBox'>
-  imageFollow: CustomShape<'imageFollow'>
-  pointer: CustomShape<'pointer', PointerOptions>
-  rectPointer: CustomShape<'rectPointer', RectPointerOptions>
-  viewPoint: CustomShape<'viewPoint', ViewPointOptions>
-  crossCircle: CustomShape<'crossCircle', CrossCircleOptions>
-  basePoint: CustomShape<'basePoint', BasePointOptions>
-  axis: CustomShape<'axis', AxisOptions>
-  nock: CustomShape<'nock', AxisOptions>
   segment: CustomShape<'segment', AxisOptions>
+  viewPoint: CustomShape<'viewPoint', ViewPointOptions>
 }
 
 export type EntityType = keyof Shapes
@@ -91,10 +123,10 @@ export type MaybeShapeOrKomponent = Maybe<ShapeOrKomponent>
 export function createShape(entity: Entity): MaybeShapeOrKomponent
 export function createShape(type: EntityType, entity?: Partial<Entity>): MaybeShapeOrKomponent
 export function createShape(typeOrEntity: EntityType | Entity, entityOrNot?: Partial<Entity>): MaybeShapeOrKomponent {
-  let type = typeOrEntity
+  // let type = typeOrEntity
   let entity = entityOrNot
   if (typeof typeOrEntity !== 'string') {
-    type = typeOrEntity.type
+    // type = typeOrEntity.type
     entity = typeOrEntity
   }
 
@@ -102,7 +134,8 @@ export function createShape(typeOrEntity: EntityType | Entity, entityOrNot?: Par
     strokeWidth: 1,
     hitStrokeWidth: 6,
     ...entity,
-  }
+  } as Entity
+  const { type } = options
 
   let shape: MaybeShapeOrKomponent
   if (type === 'imgUrl') {
@@ -162,6 +195,12 @@ export function createShape(typeOrEntity: EntityType | Entity, entityOrNot?: Par
     shape = new Nock(options)
   } else if (type === 'segment') {
     shape = new Segment(options)
+  } else if (type === 'path') {
+    shape = new Path(options)
+  } else if (type === 'angler') {
+    shape = new Angler(options)
+  } else if (type === 'assistor') {
+    shape = new Assistor(options)
   }
   // @todo 具体化
   // else {

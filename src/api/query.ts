@@ -11,7 +11,7 @@ export type ContainerTypes = Stage | Layer | Group | Komponent | Container
 type ContainerOrShape = ContainerTypes | Shape
 
 const matchAttribute = (node: Node, key: string, value: any, op: string) => {
-  const property = node.getAttr(key)
+  const property = node.getAttr(key).toString()
   switch (op) {
     case '=':
       return property === value
@@ -85,6 +85,35 @@ export const find = (container: ContainerOrShape, selector: string) => {
   return nodes
 }
 
+const shadowOprands = ['>', '+', '~']
+const isShallowSelector = (s: string) => shadowOprands.includes(s[0])
+export const shallowFind = <T extends ContainerOrShape = ContainerOrShape>(
+  node: ContainerOrShape,
+  selector: string,
+): T[] => {
+  const operand = selector[0]
+  selector = selector.slice(1)
+  const { parent } = node
+  if (!parent) {
+    return []
+  }
+  switch (operand) {
+    case '>':
+      if (node.hasChildren()) {
+        const { children = [] } = node as Container
+        return parent.find(selector).filter(n => children.includes(n)) as T[]
+      }
+      break
+    case '+':
+      return parent.find(selector).filter(n => n !== node) as T[]
+      break
+    case '~':
+      parent.find(selector).filter(n => n.index === node.index + 1)
+      break
+  }
+  return []
+}
+
 /**
  * 层级选择器
  * 示例：
@@ -100,15 +129,21 @@ export const find = (container: ContainerOrShape, selector: string) => {
  * query(stage, '.floor-levels-elevation:first-child EditableText') => [EditableText] // stage -> .a:floor-levels-elevation -> EditableText
  * ```
  */
-export const query = (container: ContainerOrShape, selector: string) => {
-  const selectors = selector.split(/\s+/g)
+export const query = <T extends ContainerOrShape = ContainerOrShape>(
+  container: ContainerOrShape,
+  selector: string,
+): T[] => {
+  const selectors = selector.replace(/([>+~])\s*/g, '$1').split(/\s+/g)
   let nodes = [container]
 
   while (selectors.length) {
-    const s = selectors.shift()
-    nodes = nodes.reduce((acc, node) => find(node, s as string), [] as ContainerOrShape[])
-    if (!nodes.length) return nodes
+    const s = selectors.shift() as string
+    if (isShallowSelector(s)) {
+      return shallowFind(container, s)
+    }
+    nodes = nodes.reduce((acc, node) => find(node, s), [] as ContainerOrShape[])
+    if (!nodes.length) return nodes as T[]
   }
 
-  return nodes
+  return nodes as T[]
 }
